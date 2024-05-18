@@ -1,0 +1,114 @@
+.game-layout-container {
+  /* border: 5px solid lime; */
+  height: 100%;
+  width: 100%;
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: grid;
+  grid-template-rows: 2fr 3fr 1fr;
+}
+
+.cards-region {
+  margin-inline: 4rem;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.card-container {
+  /* border: 1px solid yellow; */
+}
+
+.gameboard-region {
+  margin-inline: 4rem;
+  display: grid;
+  grid-template-columns: 5.5fr 1fr;
+}
+
+.game-board-container {
+  background-image: url("../images/game-board-stretched.jpg");
+  background-size: 100% 100%;
+  /* border: 1px solid lime; */
+  box-shadow: 0 0 30px 10px black;
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+}
+
+.game-board-column {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.game-board-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-board-row-marker {
+  height: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background-size: contain;
+  box-sizing: border-box;
+}
+
+.game-board-row-marker:hover {
+  box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.68);
+  border: 1px solid black;
+  box-sizing: border-box;
+}
+
+.gold-pile-container {
+  /* border: 1px solid orange; */
+}
+
+.players-region {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.player-container {
+  align-items: center;
+  display: flex;
+  justify-content: space-evenly;
+  padding: 1.4rem;
+  font-size: 1.6rem;
+  color: white;
+  font-weight: bold;
+}
+
+.bottom-image-and-name {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.bottom-player-token {
+  max-width: 80px;
+  border-radius: 50%;
+  display: block;
+}
+
+.first-player {
+  box-shadow: 0 0 15px 10px white;
+}
+
+.players-gold {
+  width: 60px;
+  height: 60px;
+}
+
+.player-container input {
+  font-size: 2rem;
+  width: 50px;
+  background-color: transparent;
+  border: none;
+  font-size: 1.6rem;
+  color: white;
+  font-weight: bold;
+}
+
+.move-it {
+  box-shadow: 0 0 5px 3px rgb(255, 0, 0);
+}

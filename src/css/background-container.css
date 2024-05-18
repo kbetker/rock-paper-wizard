@@ -1,0 +1,40 @@
+.background-container {
+  animation: animate-background 90s infinite linear;
+  background-image: url("../images/backgroundCave.png");
+  display: flex;
+  height: 100vh;
+  justify-content: space-between;
+  left: 0;
+  position: fixed;
+  top: 0;
+  width: 100vw;
+}
+
+.blue-gradient {
+  background: linear-gradient(
+    90deg,
+    rgba(158, 186, 205, 0.8) 0%,
+    rgba(158, 186, 205, 0) 100%
+  );
+  mix-blend-mode: color-dodge;
+  width: 30%;
+}
+
+.orange-gradient {
+  background: linear-gradient(
+    90deg,
+    rgba(208, 177, 117, 0) 0%,
+    rgba(255, 162, 0, 0.8) 100%
+  );
+  mix-blend-mode: color-dodge;
+  width: 30%;
+}
+
+@keyframes animate-background {
+  0% {
+    background-position: 0;
+  }
+  100% {
+    background-position: -1920px;
+  }
+}
