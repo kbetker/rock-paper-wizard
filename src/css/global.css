@@ -8,6 +8,15 @@ html {
   box-sizing: border-box;
 }
 
+button {
+  padding: 1rem;
+  font-size: xx-large;
+  border-radius: 5px;
+  border: none;
+  background: linear-gradient(rgb(105, 0, 0) 0%, rgb(39, 0, 0) 100%);
+  color: red;
+}
+
 .medievalsharp-regular {
   font-family: "MedievalSharp", cursive;
   font-weight: 400;

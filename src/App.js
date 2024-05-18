@@ -246,7 +246,9 @@ function App() {
     // check if all players have an icon
     for (let i = 0; i < players.length; i++) {
       if (playerSetup[players[i]]?.name && !playerSetup[players[i]]?.icon) {
-        alert(`${players[i]} is missing a pretty face`);
+        alert(
+          `${players[i]} is missing a pretty face. I mean, not like in a creepy way where the face is gone and there's just this red gooey mess of a bloody skull left. More like no token was selected.`
+        );
         return;
       }
     }
@@ -358,8 +360,10 @@ function App() {
                   </div>
                 );
               })}
-              <button onClick={startGame}>Start game</button>* if name is blank,
-              it will be ignored
+              <button className="medievalsharp-regular" onClick={startGame}>
+                Start game
+              </button>
+              * if name is blank, it will be ignored
             </div>
             <div className="token-selection">
               {tokenContainerStatus.isOpen &&
@@ -475,7 +479,10 @@ function App() {
                 Gold pile and new round button
             */}
             <div className="gold-pile-container">
-              <button className="next-round-btn" onClick={() => nextRound()}>
+              <button
+                className="next-round-btn medievalsharp-regular"
+                onClick={() => nextRound()}
+              >
                 Next round
               </button>
             </div>
