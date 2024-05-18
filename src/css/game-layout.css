@@ -60,7 +60,13 @@
 }
 
 .gold-pile-container {
-  /* border: 1px solid orange; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.gold-pile-container button {
+  padding: 1rem;
+  font-size: xx-large;
 }
 
 .players-region {
@@ -111,4 +117,56 @@
 
 .move-it {
   box-shadow: 0 0 5px 3px rgb(255, 0, 0);
+}
+
+.card-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+
+.card-container img {
+  width: 80%;
+  cursor: pointer;
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+
+.card-modal {
+  align-items: center;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.2),
+    rgba(0, 0, 0, 1)
+  );
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  left: 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+}
+
+.card-modal img {
+  height: 90vh;
+}
+
+.next-round-btn {
+  padding: 1rem;
+  font-size: xx-large;
+  border-radius: 5px;
+  border: none;
+  background: linear-gradient(rgb(105, 0, 0) 0%, rgb(39, 0, 0) 100%);
+  color: red;
+}
+
+.next-round-btn:hover {
+  filter: brightness(2);
 }

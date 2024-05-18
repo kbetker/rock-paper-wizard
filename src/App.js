@@ -5,6 +5,7 @@ import { imageTokens, theCards } from "./imageTokens";
 import selectImage from "./images/player-tokens/selectImage.png";
 import { copyObject } from "./utilities";
 import playersGold from "./images/gp.png";
+import cardBack from "./images/card-images/_cardBack.png";
 // import { theCards } from "./theCards";
 
 // import Player from "./Player";
@@ -20,9 +21,11 @@ function App() {
   const [gameStatus, setGameStatus] = useState("start-screen");
   //name this better?
   const [wat, setWat] = useState("");
+  const [modal, setModal] = useState("");
   const [cardPile, setCardPile] = useState(theCards);
   const [currentCards, setCurrentCards] = useState([]);
   const [discardPile, setDiscardPile] = useState([]);
+  const [currentFirstPlayer, setCurrentFirstPlayer] = useState(0);
   const [tokenContainerStatus, setTokenContainerStatus] = useState({
     isOpen: false,
     openedBy: "",
@@ -42,17 +45,133 @@ function App() {
     player6: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-5" },
   });
 
+  // console.log("%ccurrentCards:", "color: red", currentCards);
+  // console.log("%cdiscardPile:", "color: orange", discardPile);
+  // console.log("%ccardPile:", "color: yellow", cardPile);
   const shuffleCards = (arr) => {
     const copiedCards = copyObject(arr);
     const shuffledDeck = [];
     while (copiedCards.length) {
       const randInt = Math.floor(Math.random() * copiedCards.length);
       const randCard = copiedCards.splice(randInt, 1);
-      shuffledDeck.push(randCard);
+      shuffledDeck.push(...randCard);
     }
     return shuffledDeck;
   };
 
+  /**
+   * Pull top card from deck
+   */
+  const pullFromDeck = () => {
+    // check if more than 2 of same type
+    // if current length > than num of players - discard 1
+    // if deck is empty, shuffle discard and set to card pile
+    const copiedCurrentCards = copyObject(currentCards);
+    const copiedCardPile = copyObject(cardPile);
+    let copiedDiscardPile = copyObject(discardPile);
+    const numOfCards =
+      gameState.numOfPlayers === 6 ? 5 : gameState.numOfPlayers;
+
+    const checkForTriplicates = (cards, topCard) => {
+      const cardTypes = { red: 0, blue: 0, green: 0 };
+      for (let i = 0; i < cards.length; i++) {
+        const { cardType } = cards[i];
+        cardTypes[cardType]++;
+      }
+      cardTypes[topCard.cardType]++;
+      if (cardTypes[topCard.cardType] >= 3) {
+        return true;
+      }
+      return false;
+    };
+
+    const takeTopCard = () => {
+      if (copiedCardPile.length === 0) {
+        const shuffledDiscardDeck = shuffleCards(copiedDiscardPile);
+        copiedCardPile.push(...shuffledDiscardDeck);
+        copiedDiscardPile = [];
+      }
+      if (copiedCurrentCards.length === numOfCards) {
+        const lastCard = copiedCurrentCards.pop();
+        copiedDiscardPile.push(lastCard);
+      }
+
+      const topCard = copiedCardPile.pop();
+      const triplicate = checkForTriplicates(copiedCurrentCards, topCard);
+
+      if (triplicate) {
+        copiedDiscardPile.push(topCard);
+        takeTopCard();
+      } else {
+        copiedCurrentCards.unshift(topCard);
+      }
+    };
+
+    if (copiedCurrentCards.length < numOfCards) {
+      for (let i = copiedCurrentCards.length; i < gameState.numOfPlayers; i++) {
+        takeTopCard();
+      }
+    } else {
+      takeTopCard();
+    }
+
+    if (copiedCardPile.length === 0) {
+      const shuffledDiscardDeck = shuffleCards(copiedDiscardPile);
+      copiedCardPile.push(...shuffledDiscardDeck);
+      copiedDiscardPile = [];
+    }
+
+    setCardPile(copiedCardPile);
+    setDiscardPile(copiedDiscardPile);
+    setCurrentCards(copiedCurrentCards);
+  };
+
+  /**
+   * Wild Magc
+   */
+  const wildMagic = () => {
+    const copiedCardPile = copyObject(cardPile);
+    let copiedDiscardPile = copyObject(discardPile);
+    const topCard = copiedCardPile.pop();
+    if (copiedCardPile.length === 0) {
+      copiedCardPile.push(...copiedDiscardPile);
+      copiedDiscardPile = [];
+    }
+    copiedDiscardPile.push(topCard);
+    setModal(topCard.cardImgUrl);
+    setCardPile(copiedCardPile);
+    setDiscardPile(copiedDiscardPile);
+  };
+
+  /**
+   *
+   */
+  const nextRound = () => {
+    pullFromDeck();
+    //todo change players turn
+    const copiedGameState = copyObject(gameState);
+    const newCurrentFP =
+      currentFirstPlayer + 1 >= gameState.numOfPlayers
+        ? 0
+        : currentFirstPlayer + 1;
+    copiedGameState.players[`${currentFirstPlayer}`].firstPlayer = false;
+    copiedGameState.players[`${newCurrentFP}`].firstPlayer = true;
+    setGameState(copiedGameState);
+    setCurrentFirstPlayer(newCurrentFP);
+  };
+  console.log("%cgameState:", "color: red", gameState);
+  /**
+   *
+   */
+  useEffect(() => {
+    if (gameStatus === "gameOn") {
+      pullFromDeck();
+    }
+  }, [gameStatus]);
+
+  /**
+   * Initial shuffle of cards
+   */
   useEffect(() => {
     setCardPile(shuffleCards(theCards));
   }, []);
@@ -83,9 +202,7 @@ function App() {
     if (data.gp || data.gp === null) {
       copiedGameState[player].gp = data.gp;
     }
-
     setPlayerSetup(copiedGameState);
-    //
   };
 
   /**
@@ -194,10 +311,10 @@ function App() {
        */}
       {gameStatus === "start-screen" && (
         <div className="start-screen">
-          <img alt="Rock Paper Wizard Logo" src={RPWimg} />
+          <img alt="Rock Paper Wizard Logo" src={RPWimg} draggable="false" />
           <button
             onClick={() => setGameStatus("setup")}
-            className="start-button"
+            className="start-button medievalsharp-regular"
           >
             Start new game
           </button>
@@ -283,21 +400,46 @@ function App() {
        */}
       {gameStatus === "gameOn" && (
         <div className="game-layout-container">
+          {modal && (
+            <div className="card-modal" onClick={() => setModal("")}>
+              <img alt="modal" src={modal} />
+            </div>
+          )}
+          {/*
+           * Cards region
+           */}
           <div className="cards-region">
-            {makeAnArray(7).map((num) => {
-              const cardContainerId = `card-container-column-${num}`;
+            {cardPile.length > 0 ? (
+              <div className="card-container cardpile">
+                <img
+                  onClick={() => wildMagic()}
+                  alt="card pile"
+                  src={cardBack}
+                />
+              </div>
+            ) : (
+              <div className="card-container empty-card-pile"></div>
+            )}
+            {currentCards.map((card, index) => {
               return (
-                <div
-                  key={cardContainerId}
-                  id={cardContainerId}
-                  className="card-container"
-                >
-                  card container
+                <div className="card-container">
+                  <img
+                    onClick={() => setModal(card.cardImgUrl)}
+                    alt="card pile"
+                    src={card.cardImgUrl}
+                  />
                 </div>
               );
             })}
+            {discardPile.length > 0 && (
+              <div className="card-container discardpile">
+                <img alt="discard pile" src={cardBack} />
+              </div>
+            )}
           </div>
-
+          {/* 
+              GameBoard
+            */}
           <div className="gameboard-region">
             <div className="game-board-container">
               {makeAnArray(11).map((columnNum) => {
@@ -329,8 +471,19 @@ function App() {
                 );
               })}
             </div>
-            <div className="gold-pile-container">wat</div>
+            {/* 
+                Gold pile and new round button
+            */}
+            <div className="gold-pile-container">
+              <button className="next-round-btn" onClick={() => nextRound()}>
+                Next round
+              </button>
+            </div>
           </div>
+
+          {/* 
+              Players
+          */}
           <div className="players-region">
             {Object.keys(gameState.players).map((playerKey, i) => {
               if (playerKey) {
