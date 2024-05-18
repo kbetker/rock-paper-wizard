@@ -30,6 +30,16 @@ import Fighter from "./images/player-tokens/rylar.png";
 import Rogue from "./images/player-tokens/sarah2.png";
 import Cleric from "./images/player-tokens/thraun.png";
 import Wizard from "./images/player-tokens/tasha.png";
+import Caster1 from "./images/player-tokens/caster1.png";
+import Caster2 from "./images/player-tokens/caster2.png";
+import Caster3 from "./images/player-tokens/caster3.png";
+import Caster4 from "./images/player-tokens/caster4.png";
+import Caster5 from "./images/player-tokens/caster5.png";
+import Caster6 from "./images/player-tokens/caster6.png";
+import Caster7 from "./images/player-tokens/caster7.png";
+import Caster8 from "./images/player-tokens/caster8.png";
+import Caster9 from "./images/player-tokens/caster9.png";
+import Caster10 from "./images/player-tokens/caster10.png";
 
 export const theCards = [
   { cardImgUrl: antimagicField, cardName: "antimagicField", cardType: "blue" },
@@ -69,4 +79,14 @@ export const imageTokens = {
   rogue: { name: "rogue", url: Rogue },
   cleric: { name: "cleric", url: Cleric },
   wizard: { name: "wizard", url: Wizard },
+  caster1: { name: "caster1", url: Caster1 },
+  caster2: { name: "caster2", url: Caster2 },
+  caster3: { name: "caster3", url: Caster3 },
+  caster4: { name: "caster4", url: Caster4 },
+  caster5: { name: "caster5", url: Caster5 },
+  caster6: { name: "caster6", url: Caster6 },
+  caster7: { name: "caster7", url: Caster7 },
+  caster8: { name: "caster8", url: Caster8 },
+  caster9: { name: "caster9", url: Caster9 },
+  caster10: { name: "caster10", url: Caster10 },
 };
