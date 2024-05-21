@@ -1,31 +1,30 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./css/styles.css";
 import RPWimg from "./images/openScreen.png";
 import { imageTokens, theCards } from "./imageTokens";
 import selectImage from "./images/player-tokens/selectImage.png";
-import { copyObject } from "./utilities";
+import {
+  copyObject,
+  getPlayerPositions,
+  clearOldPositions,
+  defaultPlayerSetup,
+} from "./utilities";
 import playersGold from "./images/gp.png";
 import cardBack from "./images/card-images/_cardBack.png";
-// import { theCards } from "./theCards";
-
-// import Player from "./Player";
 // load screen - input screen - play screen
 
-// more than 2 of same type - discard
-// pass first player clockwise
-// players reset right/left - exit/hoard zone (4th from cave or dragon)
-// player closest to gold - 5gp  - second 3gp
 // 25gp wins game
 
 function App() {
   const [gameStatus, setGameStatus] = useState("start-screen");
-  //name this better?
-  const [wat, setWat] = useState("");
+  const [savedEvent, setSavedEvent] = useState("");
   const [modal, setModal] = useState("");
+  const [aWinnerIsYou, setAWinnerIsYou] = useState("");
   const [cardPile, setCardPile] = useState(theCards);
   const [currentCards, setCurrentCards] = useState([]);
   const [discardPile, setDiscardPile] = useState([]);
   const [currentFirstPlayer, setCurrentFirstPlayer] = useState(0);
+  const gameBoardContainer = useRef(null);
   const [tokenContainerStatus, setTokenContainerStatus] = useState({
     isOpen: false,
     openedBy: "",
@@ -36,18 +35,8 @@ function App() {
     numOfPlayers: 0,
   });
 
-  const [playerSetup, setPlayerSetup] = useState({
-    player1: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-0" },
-    player2: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-1" },
-    player3: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-2" },
-    player4: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-3" },
-    player5: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-4" },
-    player6: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-5" },
-  });
+  const [playerSetup, setPlayerSetup] = useState(defaultPlayerSetup);
 
-  // console.log("%ccurrentCards:", "color: red", currentCards);
-  // console.log("%cdiscardPile:", "color: orange", discardPile);
-  // console.log("%ccardPile:", "color: yellow", cardPile);
   const shuffleCards = (arr) => {
     const copiedCards = copyObject(arr);
     const shuffledDeck = [];
@@ -146,20 +135,77 @@ function App() {
   /**
    *
    */
+  const setNewGPandLocation = (copiedGameState) => {
+    // const copiedGameState = copyObject(gameState);
+    const playerPositions = getPlayerPositions();
+    playerPositions.firstPlace.forEach(
+      (player) => (copiedGameState.players[player].gp += 5)
+    );
+    playerPositions.secondPlace.forEach(
+      (player) => (copiedGameState.players[player].gp += 3)
+    );
+    playerPositions.playerPositions.forEach(
+      (player) =>
+        (copiedGameState.players[player.playerId].location = player.newLocation)
+    );
+
+    return copiedGameState;
+  };
+
+  const resetGame = () => {
+    setPlayerSetup(defaultPlayerSetup);
+    setGameStatus("start-screen");
+    setGameState({ players: {}, numOfPlayers: 0 });
+  };
+
+  /**
+   * Check for winner
+   */
+  const checkForWinner = (copiedGameState) => {
+    const highest = { num: 0, players: [] };
+    Object.keys(copiedGameState.players).forEach((key) => {
+      const player = copiedGameState.players[key];
+      if (player.gp >= 25) {
+        if (player.gp === highest.num) {
+          highest.players.push(player);
+        }
+
+        if (player.gp > highest.num) {
+          highest.num = player.gp;
+          highest.players = [player];
+        }
+      } else {
+        return;
+      }
+    });
+
+    if (highest.num >= 25 && highest.players.length === 1) {
+      setAWinnerIsYou(highest.players[0]);
+      setGameStatus("someoneWon");
+    }
+  };
+
+  /**
+   * next round
+   */
   const nextRound = () => {
     pullFromDeck();
-    //todo change players turn
     const copiedGameState = copyObject(gameState);
+    const oldGameState = copyObject(gameState);
     const newCurrentFP =
       currentFirstPlayer + 1 >= gameState.numOfPlayers
         ? 0
         : currentFirstPlayer + 1;
     copiedGameState.players[`${currentFirstPlayer}`].firstPlayer = false;
     copiedGameState.players[`${newCurrentFP}`].firstPlayer = true;
-    setGameState(copiedGameState);
+
+    const newGPandLocation = setNewGPandLocation(copiedGameState);
+    setGameState(newGPandLocation);
     setCurrentFirstPlayer(newCurrentFP);
+    clearOldPositions(oldGameState.players);
+    checkForWinner(copiedGameState);
   };
-  console.log("%cgameState:", "color: red", gameState);
+
   /**
    *
    */
@@ -210,20 +256,27 @@ function App() {
    * @param {*} e
    */
   const handleRowClick = (e) => {
+    const eBoundingRect = e.target.getBoundingClientRect();
+    // const wat = document.getElementById("playa1");
+    // wat.style.left = `${eBoundingRect.left}px`;
+    // wat.style.top = `${eBoundingRect.top}px`;
+
+    console.log("%ceBoundingRect:", "color: lime", eBoundingRect);
+    console.log(gameBoardContainer.current);
     const copiedGameState = copyObject(gameState);
-    if (!e.target.dataset.occupied && wat) {
-      const playerNum = wat.target.dataset.occupied;
-      wat.target.style.backgroundImage = "";
-      wat.target.dataset.occupied = "";
-      wat.target.classList.remove("move-it");
-      setWat("");
+    if (!e.target.dataset.occupied && savedEvent) {
+      const playerNum = savedEvent.target.dataset.occupied;
+      savedEvent.target.style.backgroundImage = "";
+      savedEvent.target.dataset.occupied = "";
+      savedEvent.target.classList.remove("move-it");
+      setSavedEvent("");
       copiedGameState.players[playerNum].location = e.target.id;
       setGameState(copiedGameState);
     } else if (e.target.dataset.occupied) {
-      if (wat?.target?.classList) {
-        wat.target.classList.remove("move-it");
+      if (savedEvent?.target?.classList) {
+        savedEvent.target.classList.remove("move-it");
       }
-      setWat(e);
+      setSavedEvent(e);
       e.target.classList.add("move-it");
     }
   };
@@ -260,7 +313,8 @@ function App() {
       if (players.length) {
         const randomPlayerNum = Math.floor(Math.random() * players.length);
         const randomPlayer = players.splice(randomPlayerNum, 1);
-        let copiedRandomPlayer = copyObject(playerSetup[randomPlayer]);
+        const copiedRandomPlayer = copyObject(playerSetup[randomPlayer]);
+        copiedRandomPlayer.location = `5-${count}`;
         if (count === 0) {
           copiedRandomPlayer.firstPlayer = true;
         }
@@ -323,6 +377,13 @@ function App() {
         </div>
       )}
 
+      {/* <img
+        alt="poo"
+        id="playa1"
+        className="icon-move-test"
+        src={imageTokens["rogue"].url}
+      /> */}
+
       {/* /**
        * setup
        */}
@@ -370,7 +431,7 @@ function App() {
                 Object.keys(imageTokens).map((token, index) => {
                   const { url, name } = imageTokens[token];
                   const iconSelected = Object.keys(playerSetup).filter(
-                    (wat) => playerSetup[wat]?.icon === name
+                    (playerId) => playerSetup[playerId]?.icon === name
                   );
 
                   if (iconSelected.length === 0) {
@@ -396,6 +457,28 @@ function App() {
                 })}
             </div>
           </div>
+        </div>
+      )}
+
+      {gameStatus === "someoneWon" && (
+        <div className="card-modal">
+          {aWinnerIsYou && (
+            <div className="endgame-container medievalsharp-regular">
+              <div class="winner-container">
+                <img
+                  alt="winner"
+                  className="winner-icon"
+                  src={imageTokens[aWinnerIsYou.icon].url}
+                />
+                <div>{aWinnerIsYou.name} is the winner!</div>
+              </div>
+              <div class="endgame-button-container">
+                <button className="medievalsharp-regular" onClick={resetGame}>
+                  New Game?
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -426,7 +509,7 @@ function App() {
             )}
             {currentCards.map((card, index) => {
               return (
-                <div className="card-container">
+                <div className="card-container" key={`card-slot-${index}`}>
                   <img
                     onClick={() => setModal(card.cardImgUrl)}
                     alt="card pile"
@@ -445,7 +528,7 @@ function App() {
               GameBoard
             */}
           <div className="gameboard-region">
-            <div className="game-board-container">
+            <div className="game-board-container" ref={gameBoardContainer}>
               {makeAnArray(11).map((columnNum) => {
                 const gameBoardColumnId = `game-board-column-${columnNum}`;
                 return (

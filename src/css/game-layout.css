@@ -47,6 +47,7 @@
 
 .game-board-row-marker {
   height: 100%;
+  max-height: 80px;
   aspect-ratio: 1;
   border-radius: 50%;
   background-size: contain;
@@ -156,17 +157,4 @@
 
 .card-modal img {
   height: 90vh;
-}
-
-.next-round-btn {
-  padding: 1rem;
-  font-size: xx-large;
-  border-radius: 5px;
-  border: none;
-  background: linear-gradient(rgb(105, 0, 0) 0%, rgb(39, 0, 0) 100%);
-  color: red;
-}
-
-.next-round-btn:hover {
-  filter: brightness(2);
 }
