@@ -25,6 +25,7 @@ function App() {
   const [discardPile, setDiscardPile] = useState([]);
   const [currentFirstPlayer, setCurrentFirstPlayer] = useState(0);
   const gameBoardContainer = useRef(null);
+  const playerTokens = useRef(null);
   const [tokenContainerStatus, setTokenContainerStatus] = useState({
     isOpen: false,
     openedBy: "",
@@ -136,7 +137,6 @@ function App() {
    *
    */
   const setNewGPandLocation = (copiedGameState) => {
-    // const copiedGameState = copyObject(gameState);
     const playerPositions = getPlayerPositions();
     playerPositions.firstPlace.forEach(
       (player) => (copiedGameState.players[player].gp += 5)
@@ -144,14 +144,23 @@ function App() {
     playerPositions.secondPlace.forEach(
       (player) => (copiedGameState.players[player].gp += 3)
     );
-    playerPositions.playerPositions.forEach(
-      (player) =>
-        (copiedGameState.players[player.playerId].location = player.newLocation)
-    );
+    playerPositions.playerPositions.forEach((player) => {
+      const newSquare = document.getElementById(player.newLocation);
+      const oldSquare = document.getElementById(player.oldLocation);
+      const { left, top } = newSquare.getBoundingClientRect();
+      oldSquare.dataset.occupied = "";
+      newSquare.dataset.occupied = player.playerId;
+      playerTokens.current[player.playerId].style.left = `${left}px`;
+      playerTokens.current[player.playerId].style.top = `${top}px`;
+      copiedGameState.players[player.playerId].location = player.newLocation;
+    });
 
     return copiedGameState;
   };
 
+  /**
+   * Reset game
+   */
   const resetGame = () => {
     setPlayerSetup(defaultPlayerSetup);
     setGameStatus("start-screen");
@@ -191,18 +200,17 @@ function App() {
   const nextRound = () => {
     pullFromDeck();
     const copiedGameState = copyObject(gameState);
-    const oldGameState = copyObject(gameState);
+    // const oldGameState = copyObject(gameState);
     const newCurrentFP =
       currentFirstPlayer + 1 >= gameState.numOfPlayers
         ? 0
         : currentFirstPlayer + 1;
     copiedGameState.players[`${currentFirstPlayer}`].firstPlayer = false;
     copiedGameState.players[`${newCurrentFP}`].firstPlayer = true;
-
     const newGPandLocation = setNewGPandLocation(copiedGameState);
     setGameState(newGPandLocation);
     setCurrentFirstPlayer(newCurrentFP);
-    clearOldPositions(oldGameState.players);
+    // clearOldPositions(oldGameState.players);
     checkForWinner(copiedGameState);
   };
 
@@ -256,23 +264,21 @@ function App() {
    * @param {*} e
    */
   const handleRowClick = (e) => {
-    const eBoundingRect = e.target.getBoundingClientRect();
-    // const wat = document.getElementById("playa1");
-    // wat.style.left = `${eBoundingRect.left}px`;
-    // wat.style.top = `${eBoundingRect.top}px`;
-
-    console.log("%ceBoundingRect:", "color: lime", eBoundingRect);
-    console.log(gameBoardContainer.current);
+    const { left, top } = e.target.getBoundingClientRect();
+    const isPlayerHere = e.target.dataset?.occupied;
+    const playerNum = savedEvent?.target?.dataset?.occupied;
     const copiedGameState = copyObject(gameState);
-    if (!e.target.dataset.occupied && savedEvent) {
-      const playerNum = savedEvent.target.dataset.occupied;
-      savedEvent.target.style.backgroundImage = "";
+
+    if (!isPlayerHere && savedEvent) {
+      e.target.dataset.occupied = playerNum;
       savedEvent.target.dataset.occupied = "";
       savedEvent.target.classList.remove("move-it");
-      setSavedEvent("");
+      playerTokens.current[playerNum].style.left = `${left}px`;
+      playerTokens.current[playerNum].style.top = `${top}px`;
       copiedGameState.players[playerNum].location = e.target.id;
+      setSavedEvent("");
       setGameState(copiedGameState);
-    } else if (e.target.dataset.occupied) {
+    } else if (isPlayerHere) {
       if (savedEvent?.target?.classList) {
         savedEvent.target.classList.remove("move-it");
       }
@@ -337,17 +343,39 @@ function App() {
     setGameState(copiedGameState);
   };
 
-  const setLocation = (player, playerNum) => {
-    const copiedPlayer = copyObject(player);
-    const { location, icon } = copiedPlayer;
+  // const setLocation = (player, playerNum) => {
+  //   const copiedPlayer = copyObject(player);
+  //   const { location, icon } = copiedPlayer;
 
-    setTimeout(() => {
-      const marker = document.getElementById(location);
-      const backgroundImg = imageTokens[icon].url;
-      marker.style.backgroundImage = `url(${backgroundImg})`;
-      marker.dataset.occupied = playerNum;
-    }, 10);
-  };
+  //   setTimeout(() => {
+  //     const marker = document.getElementById(location);
+  //     const backgroundImg = imageTokens[icon].url;
+  //     marker.style.backgroundImage = `url(${backgroundImg})`;
+  //     marker.dataset.occupied = playerNum;
+  //   }, 10);
+  // };
+
+  useEffect(() => {
+    if (gameStatus === "gameOn") {
+      const playerTokensInit = {};
+      Object.keys(gameState.players).forEach((key) => {
+        const playerIcon = gameState.players[key].icon;
+        const imgUrl = imageTokens[playerIcon].url;
+        const playerSquare = document.getElementById(`5-${key}`);
+        const { left, top } = playerSquare?.getBoundingClientRect();
+        const player = playerSquare.appendChild(document.createElement("img"));
+        player.classList.add("player-img");
+        player.id = `player-${key}`;
+        player.src = imgUrl;
+        player.style.left = `${left}px`;
+        player.style.top = `${top}px`;
+        playerSquare.dataset.occupied = key;
+        playerTokensInit[key] = player;
+      });
+      playerTokens.current = playerTokensInit;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameStatus]);
 
   /**
    * Return
@@ -376,13 +404,6 @@ function App() {
           </button>
         </div>
       )}
-
-      {/* <img
-        alt="poo"
-        id="playa1"
-        className="icon-move-test"
-        src={imageTokens["rogue"].url}
-      /> */}
 
       {/* /**
        * setup
@@ -581,7 +602,7 @@ function App() {
                   gameState.players[playerKey];
                 const iconUrl = imageTokens[icon].url;
 
-                setLocation(gameState.players[playerKey], playerKey);
+                // setLocation(gameState.players[playerKey], playerKey);
 
                 return (
                   <div

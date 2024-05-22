@@ -158,3 +158,12 @@
 .card-modal img {
   height: 90vh;
 }
+
+.player-img {
+  width: 80px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  transition: all 0.5s ease-in-out;
+  pointer-events: none;
+}

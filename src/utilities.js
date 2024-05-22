@@ -59,22 +59,25 @@ export const getPlayerPositions = () => {
       if (row === 0 && playerStatus.secondPlace.length > 0) {
         secondPlaceClaimed = true;
       }
-
+      console.log("%csquare:", "color: magenta", square);
       if (player) {
         if (column >= 8) {
           playerStatus.playerPositions.push({
             playerId: player,
             newLocation: `7-${player}`,
+            oldLocation: square.id,
           });
         } else if (column <= 2) {
           playerStatus.playerPositions.push({
             playerId: player,
             newLocation: `3-${player}`,
+            oldLocation: square.id,
           });
         } else {
           playerStatus.playerPositions.push({
             playerId: player,
             newLocation: `${column}-${player}`,
+            oldLocation: square.id,
           });
         }
       }
@@ -86,8 +89,10 @@ export const getPlayerPositions = () => {
 export const clearOldPositions = (oldLocations) => {
   Object.keys(oldLocations).forEach((key) => {
     const oldLoc = document.getElementById(oldLocations[key].location);
-    oldLoc.style.backgroundImage = "";
-    oldLoc.dataset.occupied = "";
+    const [column, row] = oldLoc.id.split("-");
+    if (column < 3 || column > 8) {
+      oldLoc.dataset.occupied = "";
+    }
   });
 };
 
