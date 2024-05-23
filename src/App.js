@@ -56,8 +56,8 @@ function App() {
    */
   const checkForTriplicates = (cards, topCard) => {
     const cardTypes = { red: 0, blue: 0, green: 0 };
-    for (let i = 0; i < cards.length; i++) {
-      const { cardType } = cards[i];
+    for (let key in cards) {
+      const cardType = cards[key]?.data?.cardType;
       cardTypes[cardType]++;
     }
     cardTypes[topCard.cardType]++;
@@ -80,47 +80,28 @@ function App() {
     const maxNumOfCards =
       gameState.numOfPlayers === 6 ? 5 : gameState.numOfPlayers;
 
+    console.log("%ccopiedCardPile:", "color: red", copiedCardPile);
+    console.log("%ccopiedDiscardPile:", "color: orange", copiedDiscardPile);
+
     const takeTopCard = async () => {
       if (copiedCardPile.length === 0) {
         const shuffledDiscardDeck = shuffleCards(copiedDiscardPile);
         copiedCardPile.push(...shuffledDiscardDeck);
         copiedDiscardPile = [];
       }
-
-      if (visibleCards.numOfCards === maxNumOfCards) {
-        // ANIMATE to  goToDiscardPile()
-        // const lastCard = copiedCurrentCards.pop();
-        const lastCard = visibleCards[maxNumOfCards].data;
-        visibleCards[maxNumOfCards].data = "";
-        visibleCards[maxNumOfCards].img = ""; // actually delete node?
-        copiedDiscardPile.push(lastCard);
-      }
-
       const topCard = copiedCardPile.pop();
       const triplicate = checkForTriplicates(visibleCards, topCard);
-
       if (triplicate) {
         copiedDiscardPile.push(topCard);
+        console.log("%ctriplicate:", "color: lime", triplicate);
         takeTopCard();
       } else {
         // animate here
-        // do without currentCard array? handle with visibleCards?
-        // work in reverse?
-        // visibleCards.unshift(topCard);
-        // don't forget to add numOfCards
-
         let count = maxNumOfCards;
 
         while (count > 0) {
-          // console.log("%cvisibleCards:", "color: red", visibleCards);
-
-          // walk backwars check if data
-          // no data and data before is empty, keep going back
-          // back to zero = create new img
-
+          // create new card
           if (!visibleCards[count].data && count - 1 === 0) {
-            // create new card
-            console.log("%ctopCard:", "color: cyan", topCard);
             const newCard = document.createElement("img");
             const parentWidth = visibleCards[0].container.offsetWidth;
             const parentHeight = visibleCards[0].container.offsetHeight;
@@ -136,26 +117,58 @@ function App() {
             newCard.style.left = `${left + marginLeft}px`;
             newCard.style.top = `${top + marginTop}px`;
             visibleCards[0].container.appendChild(newCard);
+            visibleCards[count].data = topCard;
+            visibleCards[count].image = newCard;
             await waitAMoment(1000);
             const newCoord = visibleCards[1].container.getBoundingClientRect();
             newCard.style.left = `${newCoord.left + marginLeft}px`;
-          } else if (!visibleCards[count].data && visibleCards[count].data) {
+            visibleCards.numOfCards += 1;
+          } else if (
+            !visibleCards[count].data &&
+            visibleCards[count - 1].data
+          ) {
             // shift cards
+            // move card
+            const parentWidth = visibleCards[0].container.offsetWidth;
+            const parentHeight = visibleCards[0].container.offsetHeight;
+            const marginLeft = (parentWidth - parentWidth * 0.8) / 2;
+            const marginTop = (parentHeight - parentHeight * 0.8) / 2;
+            const { left, top } =
+              visibleCards[count].container.getBoundingClientRect();
+            visibleCards[count - 1].image.style.left = `${left + marginLeft}px`;
+            visibleCards[count - 1].image.style.top = `${top + marginTop}px`;
+            //add data and image to container
+            visibleCards[count].image = visibleCards[count - 1].image;
+            visibleCards[count].data = visibleCards[count - 1].data;
+            //remove data and image from container -1
+            visibleCards[count - 1].image = "";
+            visibleCards[count - 1].data = "";
+            // visibleCards.numOfCards =
+            //   visibleCards.numOfCards >= maxNumOfCards
+            //     ? maxNumOfCards
+            //     : visibleCards.numOfCards + 1;
+          } else if (visibleCards[count].data && count === maxNumOfCards) {
+            const parentWidth = visibleCards["discard"].container.offsetWidth;
+            const parentHeight = visibleCards["discard"].container.offsetHeight;
+            const marginLeft = (parentWidth - parentWidth * 0.8) / 2;
+            const marginTop = (parentHeight - parentHeight * 0.8) / 2;
+            const { left, top } =
+              visibleCards["discard"].container.getBoundingClientRect();
+            visibleCards[count].image.style.left = `${left + marginLeft}px`;
+            visibleCards[count].image.style.top = `${top + marginTop}px`;
+            copiedDiscardPile.push(visibleCards[count].data);
+            await waitAMoment(500);
+            visibleCards[count].image.remove();
+            visibleCards[count].image = "";
+            visibleCards[count].data = "";
           }
-
           count--;
         }
       }
+      if (!visibleCards[maxNumOfCards].data) {
+        takeTopCard();
+      }
     };
-
-    // repeat until current cards are full
-    // if (!copiedCurrentCards[maxNumOfCards]?.data) {
-    //   for (let i = copiedCurrentCards.length; i < gameState.numOfPlayers; i++) {
-    //     takeTopCard();
-    //   }
-    // } else {
-    takeTopCard();
-    // }
 
     if (copiedCardPile.length === 0) {
       const shuffledDiscardDeck = shuffleCards(copiedDiscardPile);
@@ -163,11 +176,16 @@ function App() {
       copiedDiscardPile = [];
     }
 
+    takeTopCard();
+
     setCardPile(copiedCardPile);
     setDiscardPile(copiedDiscardPile);
     // setCurrentCards(copiedCurrentCards);
   };
 
+  /**
+   *
+   */
   useEffect(() => {
     if (gameStatus === "gameOn") {
       const cardContainersInit = {};
@@ -184,7 +202,7 @@ function App() {
           cardContainersInit[idNum].data = "";
         }
       });
-      console.log("%ccardContainersInit:", "color: red", cardContainersInit);
+
       cardContainersInit.numOfCards = 0;
       setCurrentCards(cardContainersInit);
       pullFromDeck(cardContainersInit);
@@ -582,21 +600,14 @@ function App() {
            * Cards region
            */}
           <div className="cards-region">
-            {cardPile.length > 0 ? (
-              <div
-                className="card-container cardpile"
-                id="card-container-0"
-                data-cardtype="card-pile"
-              >
-                <img
-                  onClick={() => wildMagic()}
-                  alt="card pile"
-                  src={cardBack}
-                />
-              </div>
-            ) : (
-              <div className="empty-card-pile"></div>
-            )}
+            <div
+              className="card-container cardpile"
+              id="card-container-0"
+              data-cardtype="card-pile"
+            >
+              <img onClick={() => wildMagic()} alt="card pile" src={cardBack} />
+            </div>
+
             {makeAnArray(
               gameState.numOfPlayers === 6 ? 5 : gameState.numOfPlayers
             ).map((card, index) => {
