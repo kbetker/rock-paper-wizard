@@ -17,14 +17,4 @@
 .start-button {
   position: fixed;
   bottom: 10%;
-  padding: 1rem;
-  font-size: xx-large;
-  border-radius: 5px;
-  border: none;
-  background: linear-gradient(rgb(105, 0, 0) 0%, rgb(39, 0, 0) 100%);
-  color: red;
-}
-
-.start-button:hover {
-  filter: brightness(2);
 }

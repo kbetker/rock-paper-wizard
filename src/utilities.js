@@ -24,3 +24,78 @@ export const copyObject = (inObject: any) => {
 
   return outObject;
 };
+
+/**
+ *  Get player positions
+ * @returns
+ */
+export const getPlayerPositions = () => {
+  const playerStatus = {
+    firstPlace: [],
+    secondPlace: [],
+    playerPositions: [],
+  };
+
+  let firstPlaceClaimed = false;
+  let secondPlaceClaimed = false;
+  for (let column = 10; column >= 0; column--) {
+    for (let row = 5; row >= 0; row--) {
+      const square = document.getElementById(`${column}-${row}`);
+      const player = square.dataset.occupied;
+
+      // check
+      if (firstPlaceClaimed && !secondPlaceClaimed && player) {
+        playerStatus.secondPlace.push(player);
+      }
+
+      if (player && !firstPlaceClaimed) {
+        playerStatus.firstPlace.push(player);
+      }
+
+      if (row === 0 && playerStatus.firstPlace.length > 0) {
+        firstPlaceClaimed = true;
+      }
+
+      if (row === 0 && playerStatus.secondPlace.length > 0) {
+        secondPlaceClaimed = true;
+      }
+
+      if (player) {
+        if (column >= 8) {
+          playerStatus.playerPositions.push({
+            playerId: player,
+            newLocation: `7-${player}`,
+          });
+        } else if (column <= 2) {
+          playerStatus.playerPositions.push({
+            playerId: player,
+            newLocation: `3-${player}`,
+          });
+        } else {
+          playerStatus.playerPositions.push({
+            playerId: player,
+            newLocation: `${column}-${player}`,
+          });
+        }
+      }
+    }
+  }
+  return playerStatus;
+};
+
+export const clearOldPositions = (oldLocations) => {
+  Object.keys(oldLocations).forEach((key) => {
+    const oldLoc = document.getElementById(oldLocations[key].location);
+    oldLoc.style.backgroundImage = "";
+    oldLoc.dataset.occupied = "";
+  });
+};
+
+export const defaultPlayerSetup = {
+  player1: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-0" },
+  player2: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-1" },
+  player3: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-2" },
+  player4: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-3" },
+  player5: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-4" },
+  player6: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-5" },
+};
