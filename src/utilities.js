@@ -59,7 +59,7 @@ export const getPlayerPositions = () => {
       if (row === 0 && playerStatus.secondPlace.length > 0) {
         secondPlaceClaimed = true;
       }
-      console.log("%csquare:", "color: magenta", square);
+
       if (player) {
         if (column >= 8) {
           playerStatus.playerPositions.push({
@@ -86,16 +86,6 @@ export const getPlayerPositions = () => {
   return playerStatus;
 };
 
-export const clearOldPositions = (oldLocations) => {
-  Object.keys(oldLocations).forEach((key) => {
-    const oldLoc = document.getElementById(oldLocations[key].location);
-    const [column, row] = oldLoc.id.split("-");
-    if (column < 3 || column > 8) {
-      oldLoc.dataset.occupied = "";
-    }
-  });
-};
-
 export const defaultPlayerSetup = {
   player1: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-0" },
   player2: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-1" },
@@ -103,4 +93,12 @@ export const defaultPlayerSetup = {
   player4: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-3" },
   player5: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-4" },
   player6: { name: "", icon: "", gp: 3, firstPlayer: false, location: "5-5" },
+};
+
+export const waitAMoment = (time) => {
+  return new Promise((res) => {
+    setTimeout(() => {
+      res("resolved");
+    }, time);
+  });
 };

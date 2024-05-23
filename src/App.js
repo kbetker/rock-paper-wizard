@@ -6,14 +6,11 @@ import selectImage from "./images/player-tokens/selectImage.png";
 import {
   copyObject,
   getPlayerPositions,
-  clearOldPositions,
   defaultPlayerSetup,
+  waitAMoment,
 } from "./utilities";
 import playersGold from "./images/gp.png";
 import cardBack from "./images/card-images/_cardBack.png";
-// load screen - input screen - play screen
-
-// 25gp wins game
 
 function App() {
   const [gameStatus, setGameStatus] = useState("start-screen");
@@ -21,11 +18,12 @@ function App() {
   const [modal, setModal] = useState("");
   const [aWinnerIsYou, setAWinnerIsYou] = useState("");
   const [cardPile, setCardPile] = useState(theCards);
-  const [currentCards, setCurrentCards] = useState([]);
+  const [currentCards, setCurrentCards] = useState(null);
   const [discardPile, setDiscardPile] = useState([]);
   const [currentFirstPlayer, setCurrentFirstPlayer] = useState(0);
   const gameBoardContainer = useRef(null);
   const playerTokens = useRef(null);
+  // const cardContainers = useRef(null);
   const [tokenContainerStatus, setTokenContainerStatus] = useState({
     isOpen: false,
     openedBy: "",
@@ -49,61 +47,115 @@ function App() {
     return shuffledDeck;
   };
 
+  const animateTopCard = () => {
+    // create at 0
+  };
+
+  /**
+   * Check for triplicate cards
+   */
+  const checkForTriplicates = (cards, topCard) => {
+    const cardTypes = { red: 0, blue: 0, green: 0 };
+    for (let i = 0; i < cards.length; i++) {
+      const { cardType } = cards[i];
+      cardTypes[cardType]++;
+    }
+    cardTypes[topCard.cardType]++;
+    if (cardTypes[topCard.cardType] >= 3) {
+      return true;
+    }
+    return false;
+  };
+
   /**
    * Pull top card from deck
    */
-  const pullFromDeck = () => {
+  const pullFromDeck = async (cardContainersInit) => {
     // check if more than 2 of same type
     // if current length > than num of players - discard 1
     // if deck is empty, shuffle discard and set to card pile
-    const copiedCurrentCards = copyObject(currentCards);
+    const visibleCards = currentCards ? currentCards : cardContainersInit;
     const copiedCardPile = copyObject(cardPile);
     let copiedDiscardPile = copyObject(discardPile);
-    const numOfCards =
+    const maxNumOfCards =
       gameState.numOfPlayers === 6 ? 5 : gameState.numOfPlayers;
 
-    const checkForTriplicates = (cards, topCard) => {
-      const cardTypes = { red: 0, blue: 0, green: 0 };
-      for (let i = 0; i < cards.length; i++) {
-        const { cardType } = cards[i];
-        cardTypes[cardType]++;
-      }
-      cardTypes[topCard.cardType]++;
-      if (cardTypes[topCard.cardType] >= 3) {
-        return true;
-      }
-      return false;
-    };
-
-    const takeTopCard = () => {
+    const takeTopCard = async () => {
       if (copiedCardPile.length === 0) {
         const shuffledDiscardDeck = shuffleCards(copiedDiscardPile);
         copiedCardPile.push(...shuffledDiscardDeck);
         copiedDiscardPile = [];
       }
-      if (copiedCurrentCards.length === numOfCards) {
-        const lastCard = copiedCurrentCards.pop();
+
+      if (visibleCards.numOfCards === maxNumOfCards) {
+        // ANIMATE to  goToDiscardPile()
+        // const lastCard = copiedCurrentCards.pop();
+        const lastCard = visibleCards[maxNumOfCards].data;
+        visibleCards[maxNumOfCards].data = "";
+        visibleCards[maxNumOfCards].img = ""; // actually delete node?
         copiedDiscardPile.push(lastCard);
       }
 
       const topCard = copiedCardPile.pop();
-      const triplicate = checkForTriplicates(copiedCurrentCards, topCard);
+      const triplicate = checkForTriplicates(visibleCards, topCard);
 
       if (triplicate) {
         copiedDiscardPile.push(topCard);
         takeTopCard();
       } else {
-        copiedCurrentCards.unshift(topCard);
+        // animate here
+        // do without currentCard array? handle with visibleCards?
+        // work in reverse?
+        // visibleCards.unshift(topCard);
+        // don't forget to add numOfCards
+
+        let count = maxNumOfCards;
+
+        while (count > 0) {
+          // console.log("%cvisibleCards:", "color: red", visibleCards);
+
+          // walk backwars check if data
+          // no data and data before is empty, keep going back
+          // back to zero = create new img
+
+          if (!visibleCards[count].data && count - 1 === 0) {
+            // create new card
+            console.log("%ctopCard:", "color: cyan", topCard);
+            const newCard = document.createElement("img");
+            const parentWidth = visibleCards[0].container.offsetWidth;
+            const parentHeight = visibleCards[0].container.offsetHeight;
+            const marginLeft = (parentWidth - parentWidth * 0.8) / 2;
+            const marginTop = (parentHeight - parentHeight * 0.8) / 2;
+
+            newCard.src = topCard.cardImgUrl;
+            newCard.classList.add("card");
+            newCard.style.width = `${parentWidth * 0.8}px`;
+            newCard.style.height = `${parentHeight * 0.8}px`;
+            const { left, top } =
+              visibleCards[0].container.getBoundingClientRect();
+            newCard.style.left = `${left + marginLeft}px`;
+            newCard.style.top = `${top + marginTop}px`;
+            visibleCards[0].container.appendChild(newCard);
+            await waitAMoment(1000);
+            const newCoord = visibleCards[1].container.getBoundingClientRect();
+            newCard.style.left = `${newCoord.left + marginLeft}px`;
+          } else if (!visibleCards[count].data && visibleCards[count].data) {
+            // shift cards
+          }
+
+          count--;
+        }
       }
     };
 
-    if (copiedCurrentCards.length < numOfCards) {
-      for (let i = copiedCurrentCards.length; i < gameState.numOfPlayers; i++) {
-        takeTopCard();
-      }
-    } else {
-      takeTopCard();
-    }
+    // repeat until current cards are full
+    // if (!copiedCurrentCards[maxNumOfCards]?.data) {
+    //   for (let i = copiedCurrentCards.length; i < gameState.numOfPlayers; i++) {
+    //     takeTopCard();
+    //   }
+    // } else {
+    takeTopCard();
+    // }
 
     if (copiedCardPile.length === 0) {
       const shuffledDiscardDeck = shuffleCards(copiedDiscardPile);
@@ -113,8 +165,31 @@ function App() {
 
     setCardPile(copiedCardPile);
     setDiscardPile(copiedDiscardPile);
-    setCurrentCards(copiedCurrentCards);
+    // setCurrentCards(copiedCurrentCards);
   };
+
+  useEffect(() => {
+    if (gameStatus === "gameOn") {
+      const cardContainersInit = {};
+      const cardContainerNodes = document.querySelectorAll(".card-container");
+      cardContainerNodes.forEach((cardElement) => {
+        const idNum = Number(cardElement.id.replace(/^\D+/g, ""));
+        if (cardElement.dataset.cardtype === "discard-pile") {
+          cardContainersInit.discard = {};
+          cardContainersInit.discard.container = cardElement;
+        } else {
+          cardContainersInit[idNum] = {};
+          cardContainersInit[idNum].container = cardElement;
+          cardContainersInit[idNum].image = "";
+          cardContainersInit[idNum].data = "";
+        }
+      });
+      console.log("%ccardContainersInit:", "color: red", cardContainersInit);
+      cardContainersInit.numOfCards = 0;
+      setCurrentCards(cardContainersInit);
+      pullFromDeck(cardContainersInit);
+    }
+  }, [gameStatus]);
 
   /**
    * Wild Magc
@@ -217,11 +292,11 @@ function App() {
   /**
    *
    */
-  useEffect(() => {
-    if (gameStatus === "gameOn") {
-      pullFromDeck();
-    }
-  }, [gameStatus]);
+  // useEffect(() => {
+  //   if (gameStatus === "gameOn") {
+  //     pullFromDeck();
+  //   }
+  // }, [gameStatus]);
 
   /**
    * Initial shuffle of cards
@@ -339,21 +414,9 @@ function App() {
    */
   const handleMoneys = (playerKey, value) => {
     const copiedGameState = copyObject(gameState);
-    copiedGameState.players[playerKey].gp = value;
+    copiedGameState.players[playerKey].gp = Number(value);
     setGameState(copiedGameState);
   };
-
-  // const setLocation = (player, playerNum) => {
-  //   const copiedPlayer = copyObject(player);
-  //   const { location, icon } = copiedPlayer;
-
-  //   setTimeout(() => {
-  //     const marker = document.getElementById(location);
-  //     const backgroundImg = imageTokens[icon].url;
-  //     marker.style.backgroundImage = `url(${backgroundImg})`;
-  //     marker.dataset.occupied = playerNum;
-  //   }, 10);
-  // };
 
   useEffect(() => {
     if (gameStatus === "gameOn") {
@@ -431,6 +494,7 @@ function App() {
                       alt="selected-token-img"
                       className="selected-token"
                       src={tokenImg ? tokenImg : selectImage}
+                      draggable="false"
                       onClick={() => [
                         handlePlayerInput(`player${num + 1}`, { icon: null }),
                         setTokenContainerStatus({
@@ -462,6 +526,7 @@ function App() {
                         src={url}
                         key={`token-img-${index}`}
                         className="token-img"
+                        draggable="false"
                         onClick={() => [
                           handlePlayerInput(tokenContainerStatus.openedBy, {
                             icon: name,
@@ -518,7 +583,11 @@ function App() {
            */}
           <div className="cards-region">
             {cardPile.length > 0 ? (
-              <div className="card-container cardpile">
+              <div
+                className="card-container cardpile"
+                id="card-container-0"
+                data-cardtype="card-pile"
+              >
                 <img
                   onClick={() => wildMagic()}
                   alt="card pile"
@@ -526,24 +595,34 @@ function App() {
                 />
               </div>
             ) : (
-              <div className="card-container empty-card-pile"></div>
+              <div className="empty-card-pile"></div>
             )}
-            {currentCards.map((card, index) => {
+            {makeAnArray(
+              gameState.numOfPlayers === 6 ? 5 : gameState.numOfPlayers
+            ).map((card, index) => {
               return (
-                <div className="card-container" key={`card-slot-${index}`}>
-                  <img
+                <div
+                  className="card-container"
+                  key={`card-slot-${index}`}
+                  id={`card-container-${index + 1}`}
+                  data-cardtype="visible-card"
+                >
+                  {/* <img
                     onClick={() => setModal(card.cardImgUrl)}
-                    alt="card pile"
+                    alt="current card pile"
                     src={card.cardImgUrl}
-                  />
+                  /> */}
                 </div>
               );
             })}
-            {discardPile.length > 0 && (
-              <div className="card-container discardpile">
-                <img alt="discard pile" src={cardBack} />
-              </div>
-            )}
+
+            <div
+              className="card-container"
+              id={`card-container-${gameState.numOfPlayers + 1}`}
+              data-cardtype="discard-pile"
+            >
+              <img alt="discard pile" src={cardBack} />
+            </div>
           </div>
           {/* 
               GameBoard
@@ -628,7 +707,7 @@ function App() {
                     <input
                       type="number"
                       value={gameState.players[playerKey].gp}
-                      onChange={() => handleMoneys(playerKey)}
+                      onChange={(e) => handleMoneys(playerKey, e.target.value)}
                     />
                   </div>
                 );

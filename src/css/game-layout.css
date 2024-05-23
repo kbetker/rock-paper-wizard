@@ -15,10 +15,6 @@
   grid-template-columns: repeat(7, 1fr);
 }
 
-.card-container {
-  /* border: 1px solid yellow; */
-}
-
 .gameboard-region {
   margin-inline: 4rem;
   display: grid;
@@ -124,6 +120,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  border: 1px solid red;
   -webkit-user-select: none; /* Safari */
   -moz-user-select: none; /* Firefox */
   -ms-user-select: none; /* IE10+/Edge */
@@ -132,6 +129,7 @@
 
 .card-container img {
   width: 80%;
+  height: 80%;
   cursor: pointer;
   -webkit-user-select: none; /* Safari */
   -moz-user-select: none; /* Firefox */
@@ -160,10 +158,17 @@
 }
 
 .player-img {
-  width: 80px;
+  max-height: 80px;
   position: fixed;
   left: 0;
   top: 0;
   transition: all 0.5s ease-in-out;
   pointer-events: none;
+}
+
+.card {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transition: all 0.5s ease-in-out;
 }
