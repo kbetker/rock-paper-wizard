@@ -18,7 +18,8 @@ function App() {
   const [modal, setModal] = useState("");
   const [aWinnerIsYou, setAWinnerIsYou] = useState("");
   const [cardPile, setCardPile] = useState(theCards);
-  const [currentCards, setCurrentCards] = useState(null);
+  const currentCards = useRef(null);
+  const [displayedCards, setDisplayedCards] = useState([]);
   const [discardPile, setDiscardPile] = useState([]);
   const [currentFirstPlayer, setCurrentFirstPlayer] = useState(0);
   const gameBoardContainer = useRef(null);
@@ -70,30 +71,39 @@ function App() {
   /**
    * Pull top card from deck
    */
-  const pullFromDeck = async (cardContainersInit) => {
+  const pullFromDeck = () => {
     // check if more than 2 of same type
     // if current length > than num of players - discard 1
     // if deck is empty, shuffle discard and set to card pile
-    const visibleCards = currentCards ? currentCards : cardContainersInit;
+    // const currentCards.current = currentCards;
+    //  ? currentCards : cardContainersInit;
+    console.log("%ccurrentCards:", "color: green", currentCards);
     const copiedCardPile = copyObject(cardPile);
     let copiedDiscardPile = copyObject(discardPile);
+    const copiedDisplayedCards = copyObject(displayedCards);
     const maxNumOfCards =
       gameState.numOfPlayers === 6 ? 5 : gameState.numOfPlayers;
 
     console.log("%ccopiedCardPile:", "color: red", copiedCardPile);
     console.log("%ccopiedDiscardPile:", "color: orange", copiedDiscardPile);
+    console.log(
+      "%ccopiedDisplayedCards:",
+      "color: yellow",
+      copiedDisplayedCards
+    );
 
-    const takeTopCard = async () => {
+    const takeTopCard = () => {
+      // reshuffle if out of cards
       if (copiedCardPile.length === 0) {
         const shuffledDiscardDeck = shuffleCards(copiedDiscardPile);
         copiedCardPile.push(...shuffledDiscardDeck);
         copiedDiscardPile = [];
       }
+
       const topCard = copiedCardPile.pop();
-      const triplicate = checkForTriplicates(visibleCards, topCard);
+      const triplicate = checkForTriplicates(currentCards.current, topCard);
       if (triplicate) {
         copiedDiscardPile.push(topCard);
-        console.log("%ctriplicate:", "color: lime", triplicate);
         takeTopCard();
       } else {
         // animate here
@@ -101,10 +111,10 @@ function App() {
 
         while (count > 0) {
           // create new card
-          if (!visibleCards[count].data && count - 1 === 0) {
+          if (!currentCards.current[count].data && count - 1 === 0) {
             const newCard = document.createElement("img");
-            const parentWidth = visibleCards[0].container.offsetWidth;
-            const parentHeight = visibleCards[0].container.offsetHeight;
+            const parentWidth = currentCards.current[0].container.offsetWidth;
+            const parentHeight = currentCards.current[0].container.offsetHeight;
             const marginLeft = (parentWidth - parentWidth * 0.8) / 2;
             const marginTop = (parentHeight - parentHeight * 0.8) / 2;
 
@@ -113,59 +123,78 @@ function App() {
             newCard.style.width = `${parentWidth * 0.8}px`;
             newCard.style.height = `${parentHeight * 0.8}px`;
             const { left, top } =
-              visibleCards[0].container.getBoundingClientRect();
+              currentCards.current[0].container.getBoundingClientRect();
             newCard.style.left = `${left + marginLeft}px`;
             newCard.style.top = `${top + marginTop}px`;
-            visibleCards[0].container.appendChild(newCard);
-            visibleCards[count].data = topCard;
-            visibleCards[count].image = newCard;
-            await waitAMoment(1000);
-            const newCoord = visibleCards[1].container.getBoundingClientRect();
+            currentCards.current[0].container.appendChild(newCard);
+            currentCards.current[count].data = topCard;
+            currentCards.current[count].image = newCard;
+            copiedDisplayedCards.unshift(currentCards.current[count].data);
+            // await waitAMoment(1000);
+            const newCoord =
+              currentCards.current[1].container.getBoundingClientRect();
             newCard.style.left = `${newCoord.left + marginLeft}px`;
-            visibleCards.numOfCards += 1;
+            currentCards.current.numOfCards += 1;
           } else if (
-            !visibleCards[count].data &&
-            visibleCards[count - 1].data
+            !currentCards.current[count].data &&
+            currentCards.current[count - 1].data
           ) {
             // shift cards
             // move card
-            const parentWidth = visibleCards[0].container.offsetWidth;
-            const parentHeight = visibleCards[0].container.offsetHeight;
+            const parentWidth = currentCards.current[0].container.offsetWidth;
+            const parentHeight = currentCards.current[0].container.offsetHeight;
             const marginLeft = (parentWidth - parentWidth * 0.8) / 2;
             const marginTop = (parentHeight - parentHeight * 0.8) / 2;
             const { left, top } =
-              visibleCards[count].container.getBoundingClientRect();
-            visibleCards[count - 1].image.style.left = `${left + marginLeft}px`;
-            visibleCards[count - 1].image.style.top = `${top + marginTop}px`;
+              currentCards.current[count].container.getBoundingClientRect();
+            currentCards.current[count - 1].image.style.left = `${
+              left + marginLeft
+            }px`;
+            currentCards.current[count - 1].image.style.top = `${
+              top + marginTop
+            }px`;
             //add data and image to container
-            visibleCards[count].image = visibleCards[count - 1].image;
-            visibleCards[count].data = visibleCards[count - 1].data;
+            currentCards.current[count].image =
+              currentCards.current[count - 1].image;
+            currentCards.current[count].data =
+              currentCards.current[count - 1].data;
+            copiedDisplayedCards.unshift(currentCards.current[count - 1].data);
             //remove data and image from container -1
-            visibleCards[count - 1].image = "";
-            visibleCards[count - 1].data = "";
-            // visibleCards.numOfCards =
-            //   visibleCards.numOfCards >= maxNumOfCards
+            currentCards.current[count - 1].image = "";
+            currentCards.current[count - 1].data = "";
+            // currentCards.current.numOfCards =
+            //   currentCards.current.numOfCards >= maxNumOfCards
             //     ? maxNumOfCards
-            //     : visibleCards.numOfCards + 1;
-          } else if (visibleCards[count].data && count === maxNumOfCards) {
-            const parentWidth = visibleCards["discard"].container.offsetWidth;
-            const parentHeight = visibleCards["discard"].container.offsetHeight;
+            //     : currentCards.current.numOfCards + 1;
+          } else if (
+            currentCards.current[count].data &&
+            count === maxNumOfCards
+          ) {
+            const parentWidth =
+              currentCards.current["discard"].container.offsetWidth;
+            const parentHeight =
+              currentCards.current["discard"].container.offsetHeight;
             const marginLeft = (parentWidth - parentWidth * 0.8) / 2;
             const marginTop = (parentHeight - parentHeight * 0.8) / 2;
             const { left, top } =
-              visibleCards["discard"].container.getBoundingClientRect();
-            visibleCards[count].image.style.left = `${left + marginLeft}px`;
-            visibleCards[count].image.style.top = `${top + marginTop}px`;
-            copiedDiscardPile.push(visibleCards[count].data);
-            await waitAMoment(500);
-            visibleCards[count].image.remove();
-            visibleCards[count].image = "";
-            visibleCards[count].data = "";
+              currentCards.current["discard"].container.getBoundingClientRect();
+            currentCards.current[count].image.style.left = `${
+              left + marginLeft
+            }px`;
+            currentCards.current[count].image.style.top = `${
+              top + marginTop
+            }px`;
+            const discarded = copiedDisplayedCards.pop();
+            copiedDiscardPile.push(discarded);
+            // await waitAMoment(500);
+            currentCards.current[count].image.remove();
+            currentCards.current[count].image = "";
+            currentCards.current[count].data = "";
           }
           count--;
         }
       }
-      if (!visibleCards[maxNumOfCards].data) {
+      if (!currentCards.current[maxNumOfCards].data) {
         takeTopCard();
       }
     };
@@ -177,7 +206,7 @@ function App() {
     }
 
     takeTopCard();
-
+    setDisplayedCards(copiedDisplayedCards);
     setCardPile(copiedCardPile);
     setDiscardPile(copiedDiscardPile);
     // setCurrentCards(copiedCurrentCards);
@@ -204,8 +233,8 @@ function App() {
       });
 
       cardContainersInit.numOfCards = 0;
-      setCurrentCards(cardContainersInit);
-      pullFromDeck(cardContainersInit);
+      currentCards.current = cardContainersInit;
+      pullFromDeck();
     }
   }, [gameStatus]);
 
