@@ -1,0 +1,29 @@
+.card {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transition: all 0.5s ease-in-out;
+  transform: perspective(800px) rotateY(0deg);
+}
+
+.card-rotate-front {
+  transform: perspective(800px) rotateY(-90deg);
+}
+
+.card-rotate-back {
+  transform: perspective(800px) rotateY(80deg);
+}
+
+/* @keyframes rotate-front {
+  0% {
+    transform: perspective(800px) rotateY(-80deg);
+  }
+
+  50% {
+    transform: perspective(800px) rotateY(-80deg);
+  }
+
+  100% {
+    transform: perspective(800px) rotateY(0deg);
+  }
+} */

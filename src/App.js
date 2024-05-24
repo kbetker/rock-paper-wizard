@@ -8,11 +8,14 @@ import {
   getPlayerPositions,
   defaultPlayerSetup,
   waitAMoment,
+  checkForTriplicates,
+  animateCards,
 } from "./utilities";
 import playersGold from "./images/gp.png";
 import cardBack from "./images/card-images/_cardBack.png";
 
 function App() {
+  // todo : bugfix - new game cards not auto-cycling
   const [gameStatus, setGameStatus] = useState("start-screen");
   const [savedEvent, setSavedEvent] = useState("");
   const [modal, setModal] = useState("");
@@ -48,168 +51,66 @@ function App() {
     return shuffledDeck;
   };
 
-  const animateTopCard = () => {
-    // create at 0
-  };
-
-  /**
-   * Check for triplicate cards
-   */
-  const checkForTriplicates = (cards, topCard) => {
-    const cardTypes = { red: 0, blue: 0, green: 0 };
-    for (let key in cards) {
-      const cardType = cards[key]?.data?.cardType;
-      cardTypes[cardType]++;
-    }
-    cardTypes[topCard.cardType]++;
-    if (cardTypes[topCard.cardType] >= 3) {
-      return true;
-    }
-    return false;
-  };
-
   /**
    * Pull top card from deck
    */
-  const pullFromDeck = () => {
+  const pullFromDeck = async () => {
     // check if more than 2 of same type
     // if current length > than num of players - discard 1
     // if deck is empty, shuffle discard and set to card pile
-    // const currentCards.current = currentCards;
-    //  ? currentCards : cardContainersInit;
-    console.log("%ccurrentCards:", "color: green", currentCards);
-    const copiedCardPile = copyObject(cardPile);
-    let copiedDiscardPile = copyObject(discardPile);
-    const copiedDisplayedCards = copyObject(displayedCards);
-    const maxNumOfCards =
+    const displayCards_copy = copyObject(displayedCards);
+    const cardPile_copy = copyObject(cardPile);
+    let discardPile_copy = copyObject(discardPile);
+    const numOfCards =
       gameState.numOfPlayers === 6 ? 5 : gameState.numOfPlayers;
 
-    console.log("%ccopiedCardPile:", "color: red", copiedCardPile);
-    console.log("%ccopiedDiscardPile:", "color: orange", copiedDiscardPile);
-    console.log(
-      "%ccopiedDisplayedCards:",
-      "color: yellow",
-      copiedDisplayedCards
-    );
-
-    const takeTopCard = () => {
-      // reshuffle if out of cards
-      if (copiedCardPile.length === 0) {
-        const shuffledDiscardDeck = shuffleCards(copiedDiscardPile);
-        copiedCardPile.push(...shuffledDiscardDeck);
-        copiedDiscardPile = [];
-      }
-
-      const topCard = copiedCardPile.pop();
-      const triplicate = checkForTriplicates(currentCards.current, topCard);
-      if (triplicate) {
-        copiedDiscardPile.push(topCard);
-        takeTopCard();
-      } else {
-        // animate here
-        let count = maxNumOfCards;
-
-        while (count > 0) {
-          // create new card
-          if (!currentCards.current[count].data && count - 1 === 0) {
-            const newCard = document.createElement("img");
-            const parentWidth = currentCards.current[0].container.offsetWidth;
-            const parentHeight = currentCards.current[0].container.offsetHeight;
-            const marginLeft = (parentWidth - parentWidth * 0.8) / 2;
-            const marginTop = (parentHeight - parentHeight * 0.8) / 2;
-
-            newCard.src = topCard.cardImgUrl;
-            newCard.classList.add("card");
-            newCard.style.width = `${parentWidth * 0.8}px`;
-            newCard.style.height = `${parentHeight * 0.8}px`;
-            const { left, top } =
-              currentCards.current[0].container.getBoundingClientRect();
-            newCard.style.left = `${left + marginLeft}px`;
-            newCard.style.top = `${top + marginTop}px`;
-            currentCards.current[0].container.appendChild(newCard);
-            currentCards.current[count].data = topCard;
-            currentCards.current[count].image = newCard;
-            copiedDisplayedCards.unshift(currentCards.current[count].data);
-            // await waitAMoment(1000);
-            const newCoord =
-              currentCards.current[1].container.getBoundingClientRect();
-            newCard.style.left = `${newCoord.left + marginLeft}px`;
-            currentCards.current.numOfCards += 1;
-          } else if (
-            !currentCards.current[count].data &&
-            currentCards.current[count - 1].data
-          ) {
-            // shift cards
-            // move card
-            const parentWidth = currentCards.current[0].container.offsetWidth;
-            const parentHeight = currentCards.current[0].container.offsetHeight;
-            const marginLeft = (parentWidth - parentWidth * 0.8) / 2;
-            const marginTop = (parentHeight - parentHeight * 0.8) / 2;
-            const { left, top } =
-              currentCards.current[count].container.getBoundingClientRect();
-            currentCards.current[count - 1].image.style.left = `${
-              left + marginLeft
-            }px`;
-            currentCards.current[count - 1].image.style.top = `${
-              top + marginTop
-            }px`;
-            //add data and image to container
-            currentCards.current[count].image =
-              currentCards.current[count - 1].image;
-            currentCards.current[count].data =
-              currentCards.current[count - 1].data;
-            copiedDisplayedCards.unshift(currentCards.current[count - 1].data);
-            //remove data and image from container -1
-            currentCards.current[count - 1].image = "";
-            currentCards.current[count - 1].data = "";
-            // currentCards.current.numOfCards =
-            //   currentCards.current.numOfCards >= maxNumOfCards
-            //     ? maxNumOfCards
-            //     : currentCards.current.numOfCards + 1;
-          } else if (
-            currentCards.current[count].data &&
-            count === maxNumOfCards
-          ) {
-            const parentWidth =
-              currentCards.current["discard"].container.offsetWidth;
-            const parentHeight =
-              currentCards.current["discard"].container.offsetHeight;
-            const marginLeft = (parentWidth - parentWidth * 0.8) / 2;
-            const marginTop = (parentHeight - parentHeight * 0.8) / 2;
-            const { left, top } =
-              currentCards.current["discard"].container.getBoundingClientRect();
-            currentCards.current[count].image.style.left = `${
-              left + marginLeft
-            }px`;
-            currentCards.current[count].image.style.top = `${
-              top + marginTop
-            }px`;
-            const discarded = copiedDisplayedCards.pop();
-            copiedDiscardPile.push(discarded);
-            // await waitAMoment(500);
-            currentCards.current[count].image.remove();
-            currentCards.current[count].image = "";
-            currentCards.current[count].data = "";
-          }
-          count--;
-        }
-      }
-      if (!currentCards.current[maxNumOfCards].data) {
-        takeTopCard();
+    // check if deck needs to be reshuffled when pile is empty
+    const reshuffle = () => {
+      if (cardPile_copy.length === 0) {
+        const shuffledDiscardDeck = shuffleCards(discardPile_copy);
+        cardPile_copy.push(...shuffledDiscardDeck);
+        discardPile_copy = [];
       }
     };
 
-    if (copiedCardPile.length === 0) {
-      const shuffledDiscardDeck = shuffleCards(copiedDiscardPile);
-      copiedCardPile.push(...shuffledDiscardDeck);
-      copiedDiscardPile = [];
+    const takeTopCard = async () => {
+      reshuffle();
+      // discards if last card
+      if (displayCards_copy.length === numOfCards) {
+        const lastCard = displayCards_copy.pop();
+        discardPile_copy.push(lastCard);
+      }
+
+      const topCard = cardPile_copy.pop();
+      const isTriplicate = checkForTriplicates(displayCards_copy, topCard);
+
+      if (isTriplicate) {
+        discardPile_copy.push(topCard);
+        takeTopCard();
+      } else {
+        displayCards_copy.unshift(topCard);
+        await animateCards(
+          currentCards,
+          topCard,
+          gameState.numOfPlayers,
+          cardBack
+        );
+      }
+    };
+
+    if (displayCards_copy.length < numOfCards) {
+      for (let i = displayCards_copy.length; i < gameState.numOfPlayers; i++) {
+        await takeTopCard();
+      }
+    } else {
+      await takeTopCard();
     }
 
-    takeTopCard();
-    setDisplayedCards(copiedDisplayedCards);
-    setCardPile(copiedCardPile);
-    setDiscardPile(copiedDiscardPile);
-    // setCurrentCards(copiedCurrentCards);
+    reshuffle();
+
+    setCardPile(cardPile_copy);
+    setDiscardPile(discardPile_copy);
+    setDisplayedCards(displayCards_copy);
   };
 
   /**
@@ -287,6 +188,7 @@ function App() {
     setPlayerSetup(defaultPlayerSetup);
     setGameStatus("start-screen");
     setGameState({ players: {}, numOfPlayers: 0 });
+    currentCards.current = {};
   };
 
   /**
@@ -597,7 +499,7 @@ function App() {
         <div className="card-modal">
           {aWinnerIsYou && (
             <div className="endgame-container medievalsharp-regular">
-              <div class="winner-container">
+              <div className="winner-container">
                 <img
                   alt="winner"
                   className="winner-icon"
@@ -605,7 +507,7 @@ function App() {
                 />
                 <div>{aWinnerIsYou.name} is the winner!</div>
               </div>
-              <div class="endgame-button-container">
+              <div className="endgame-button-container">
                 <button className="medievalsharp-regular" onClick={resetGame}>
                   New Game?
                 </button>

@@ -120,7 +120,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 1px solid red;
   -webkit-user-select: none; /* Safari */
   -moz-user-select: none; /* Firefox */
   -ms-user-select: none; /* IE10+/Edge */
@@ -164,11 +163,4 @@
   top: 0;
   transition: all 0.5s ease-in-out;
   pointer-events: none;
-}
-
-.card {
-  position: fixed;
-  left: 0;
-  top: 0;
-  transition: all 0.5s ease-in-out;
 }
