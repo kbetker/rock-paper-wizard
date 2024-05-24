@@ -119,31 +119,32 @@ export const checkForTriplicates = (cards, topCard) => {
 export const animateCards = async (
   currentCards,
   topCard,
-  maxNumOfCards,
-  cardBack
+  numOfPlayers,
+  cardBack,
+  setModal
 ) => {
-  //do stuffs
-  let count = maxNumOfCards === 6 ? 5 : maxNumOfCards;
+  const maxNumOfCards = numOfPlayers === 6 ? 5 : numOfPlayers;
+  let count = maxNumOfCards;
+  const drawPileImg = document.getElementById("draw-pile-img");
+  const discardPileImg = document.getElementById("discard-pile-img");
 
   while (count > 0) {
     // create new card at index 0
     //todo: create a ref for card backer so we're not generating many imgs
     if (!currentCards.current[count].data && count - 1 === 0) {
-      const newCard = document.createElement("img");
-      const cardBacker = document.createElement("img");
       const parentWidth = currentCards.current[0].container.offsetWidth;
       const parentHeight = currentCards.current[0].container.offsetHeight;
       const marginLeft = (parentWidth - parentWidth * 0.8) / 2;
       const marginTop = (parentHeight - parentHeight * 0.8) / 2;
 
+      const newCard = document.createElement("img");
+      drawPileImg.style.opacity = "1";
+
+      newCard.onclick = () => setModal(topCard.cardImgUrl);
       newCard.src = topCard.cardImgUrl;
-      cardBacker.src = cardBack;
 
       newCard.classList.add("card");
-      cardBacker.classList.add("card");
-
       newCard.classList.add("card-rotate-front");
-      cardBacker.classList.add("card-rotate-back");
 
       newCard.style.width = `${parentWidth * 0.8}px`;
       newCard.style.height = `${parentHeight * 0.8}px`;
@@ -152,23 +153,38 @@ export const animateCards = async (
 
       newCard.style.left = `${left + marginLeft}px`;
       newCard.style.top = `${top + marginTop}px`;
-      cardBacker.style.left = `${left + marginLeft}px`;
-      cardBacker.style.top = `${top + marginTop}px`;
 
       currentCards.current[0].container.appendChild(newCard);
       currentCards.current[0].container.appendChild(newCard);
       currentCards.current[0].data = topCard;
       currentCards.current[0].image = newCard;
-      await waitAMoment(500);
+
+      await waitAMoment(10);
+      drawPileImg.classList.add("card-rotate-back");
+      await waitAMoment(200);
       newCard.classList.remove("card-rotate-front");
+      await waitAMoment(10);
+      drawPileImg.style.opacity = "0";
+      drawPileImg.classList.remove("card-rotate-back");
+      await waitAMoment(200);
+      drawPileImg.style.opacity = "1";
       // todo: animate card flip
     }
 
-    // shift card to the right
+    /**
+     * shift card to the right
+     */
     if (
       !currentCards.current[count].data &&
       currentCards.current[count - 1].data
     ) {
+      // await waitAMoment(10);
+      // drawPileImg.classList.add("card-rotate-back");
+      // await waitAMoment(230);
+      // drawPileImg.style.opacity = "0";
+      // drawPileImg.classList.remove("card-rotate-back");
+      // await waitAMoment(10);
+      drawPileImg.style.opacity = "1";
       const parentWidth = currentCards.current[count].container.offsetWidth;
       const parentHeight = currentCards.current[count].container.offsetHeight;
       const marginLeft = (parentWidth - parentWidth * 0.8) / 2;
@@ -186,7 +202,9 @@ export const animateCards = async (
       currentCards.current[count - 1].image = "";
       currentCards.current[count - 1].data = "";
     } else if (currentCards.current[count].data && count === maxNumOfCards) {
-      // move card and discard
+      /**
+       *  discard: move card and discard
+       */
       const parentWidth = currentCards.current["discard"].container.offsetWidth;
       const parentHeight =
         currentCards.current["discard"].container.offsetHeight;
@@ -198,12 +216,12 @@ export const animateCards = async (
       currentCards.current[count].image.style.top = `${top + marginTop}px`;
       // const discarded = copiedDisplayedCards.pop();
       // copiedDiscardPile.push(discarded);
-      // await waitAMoment(500);
+      await waitAMoment(200);
       currentCards.current[count].image.remove();
       currentCards.current[count].image = "";
       currentCards.current[count].data = "";
 
-      await animateCards(currentCards, topCard, maxNumOfCards);
+      await animateCards(currentCards, topCard, maxNumOfCards, numOfPlayers);
     }
 
     count--;

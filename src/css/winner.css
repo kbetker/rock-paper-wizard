@@ -23,6 +23,10 @@
   gap: 2rem;
 }
 
+.winner-container div {
+  max-width: 60vw;
+}
+
 .winner-container img {
   width: 300px;
   height: 300px;

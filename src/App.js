@@ -16,6 +16,7 @@ import cardBack from "./images/card-images/_cardBack.png";
 
 function App() {
   // todo : bugfix - new game cards not auto-cycling
+  // todo: bugfix - cards not cycling with 5/6 players cards
   const [gameStatus, setGameStatus] = useState("start-screen");
   const [savedEvent, setSavedEvent] = useState("");
   const [modal, setModal] = useState("");
@@ -27,7 +28,6 @@ function App() {
   const [currentFirstPlayer, setCurrentFirstPlayer] = useState(0);
   const gameBoardContainer = useRef(null);
   const playerTokens = useRef(null);
-  // const cardContainers = useRef(null);
   const [tokenContainerStatus, setTokenContainerStatus] = useState({
     isOpen: false,
     openedBy: "",
@@ -86,20 +86,21 @@ function App() {
 
       if (isTriplicate) {
         discardPile_copy.push(topCard);
-        takeTopCard();
+        await takeTopCard();
       } else {
         displayCards_copy.unshift(topCard);
         await animateCards(
           currentCards,
           topCard,
           gameState.numOfPlayers,
-          cardBack
+          cardBack,
+          setModal
         );
       }
     };
 
     if (displayCards_copy.length < numOfCards) {
-      for (let i = displayCards_copy.length; i < gameState.numOfPlayers; i++) {
+      for (let i = displayCards_copy.length; i < numOfCards; i++) {
         await takeTopCard();
       }
     } else {
@@ -327,14 +328,14 @@ function App() {
     }
 
     // check if all players have an icon
-    for (let i = 0; i < players.length; i++) {
-      if (playerSetup[players[i]]?.name && !playerSetup[players[i]]?.icon) {
-        alert(
-          `${players[i]} is missing a pretty face. I mean, not like in a creepy way where the face is gone and there's just this red gooey mess of a bloody skull left. More like no token was selected.`
-        );
-        return;
-      }
-    }
+    // for (let i = 0; i < players.length; i++) {
+    //   if (playerSetup[players[i]]?.name && !playerSetup[players[i]]?.icon) {
+    //     alert(
+    //       `${players[i]} is missing a pretty face. I mean, not like in a creepy way where the face is gone and there's just this red gooey mess of a bloody skull left. More like no token was selected.`
+    //     );
+    //     return;
+    //   }
+    // }
     copiedGameState.numOfPlayers = players.length;
     let count = 0;
 
@@ -372,7 +373,7 @@ function App() {
       const playerTokensInit = {};
       Object.keys(gameState.players).forEach((key) => {
         const playerIcon = gameState.players[key].icon;
-        const imgUrl = imageTokens[playerIcon].url;
+        const imgUrl = imageTokens[playerIcon]?.url || "";
         const playerSquare = document.getElementById(`5-${key}`);
         const { left, top } = playerSquare?.getBoundingClientRect();
         const player = playerSquare.appendChild(document.createElement("img"));
@@ -536,7 +537,14 @@ function App() {
               id="card-container-0"
               data-cardtype="card-pile"
             >
-              <img onClick={() => wildMagic()} alt="card pile" src={cardBack} />
+              <img
+                onClick={() => wildMagic()}
+                alt="card pile"
+                src={cardBack}
+                id="draw-pile-img"
+              />
+
+              <img alt="card pile" src={cardBack} id="draw-pile-img-backer" />
             </div>
 
             {makeAnArray(
@@ -563,7 +571,12 @@ function App() {
               id={`card-container-${gameState.numOfPlayers + 1}`}
               data-cardtype="discard-pile"
             >
-              <img alt="discard pile" src={cardBack} />
+              <img alt="discard pile" src={cardBack} id="discard-pile-img" />
+              <img
+                alt="discard pile backer"
+                src={cardBack}
+                id="discard-pile-img-backer"
+              />
             </div>
           </div>
           {/* 
@@ -621,7 +634,7 @@ function App() {
               if (playerKey) {
                 const { gp, icon, name, firstPlayer, location } =
                   gameState.players[playerKey];
-                const iconUrl = imageTokens[icon].url;
+                const iconUrl = imageTokens[icon]?.url || "";
 
                 // setLocation(gameState.players[playerKey], playerKey);
 
