@@ -216,7 +216,18 @@ export const animateCards = async (
       currentCards.current[count].image.style.top = `${top + marginTop}px`;
       // const discarded = copiedDisplayedCards.pop();
       // copiedDiscardPile.push(discarded);
+
+      discardPileImg.style.opacity = "0";
+      discardPileImg.classList.add("card-rotate-back");
+
+      await waitAMoment(10);
+      currentCards.current[count].image.classList.add("card-rotate-front");
+      await waitAMoment(190);
+      discardPileImg.style.opacity = "1";
+      discardPileImg.classList.remove("card-rotate-back");
       await waitAMoment(200);
+      discardPileImg.classList.add("card-rotate-back");
+      discardPileImg.style.opacity = "0";
       currentCards.current[count].image.remove();
       currentCards.current[count].image = "";
       currentCards.current[count].data = "";

@@ -216,15 +216,20 @@ function App() {
     if (highest.num >= 25 && highest.players.length === 1) {
       setAWinnerIsYou(highest.players[0]);
       setGameStatus("someoneWon");
+      return true
     }
+    return false
   };
 
   /**
    * next round
    */
   const nextRound = () => {
-    pullFromDeck();
     const copiedGameState = copyObject(gameState);
+    const isWinner = checkForWinner(copiedGameState);
+    if(isWinner) return
+
+    pullFromDeck();
     // const oldGameState = copyObject(gameState);
     const newCurrentFP =
       currentFirstPlayer + 1 >= gameState.numOfPlayers
@@ -236,7 +241,6 @@ function App() {
     setGameState(newGPandLocation);
     setCurrentFirstPlayer(newCurrentFP);
     // clearOldPositions(oldGameState.players);
-    checkForWinner(copiedGameState);
   };
 
   /**
@@ -579,7 +583,7 @@ function App() {
               />
             </div>
           </div>
-          {/* 
+          {/*
               GameBoard
             */}
           <div className="gameboard-region">
@@ -613,7 +617,7 @@ function App() {
                 );
               })}
             </div>
-            {/* 
+            {/*
                 Gold pile and new round button
             */}
             <div className="gold-pile-container">
@@ -626,7 +630,7 @@ function App() {
             </div>
           </div>
 
-          {/* 
+          {/*
               Players
           */}
           <div className="players-region">

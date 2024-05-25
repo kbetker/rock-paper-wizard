@@ -25,6 +25,7 @@
 
 #discard-pile-img {
   z-index: -10;
+    transition: transform 0.2s ease-in-out;
 }
 
 #draw-pile-img-backer {
@@ -42,6 +43,7 @@
   height: 80%;
   /* top: 0; */
   z-index: -999;
+
 }
 
 /* #card-container-0 {
