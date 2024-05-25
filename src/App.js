@@ -415,7 +415,7 @@ function App() {
           <img alt="Rock Paper Wizard Logo" src={RPWimg} draggable="false" />
           <button
             onClick={() => setGameStatus("setup")}
-            className="start-button medievalsharp-regular"
+            className="start-button"
           >
             Start new game
           </button>
@@ -460,7 +460,7 @@ function App() {
                   </div>
                 );
               })}
-              <button className="medievalsharp-regular" onClick={startGame}>
+              <button onClick={startGame}>
                 Start game
               </button>
               * if name is blank, it will be ignored
@@ -503,7 +503,7 @@ function App() {
       {gameStatus === "someoneWon" && (
         <div className="card-modal">
           {aWinnerIsYou && (
-            <div className="endgame-container medievalsharp-regular">
+            <div className="endgame-container">
               <div className="winner-container">
                 <img
                   alt="winner"
@@ -513,7 +513,7 @@ function App() {
                 <div>{aWinnerIsYou.name} is the winner!</div>
               </div>
               <div className="endgame-button-container">
-                <button className="medievalsharp-regular" onClick={resetGame}>
+                <button  onClick={resetGame}>
                   New Game?
                 </button>
               </div>
@@ -622,7 +622,7 @@ function App() {
             */}
             <div className="gold-pile-container">
               <button
-                className="next-round-btn medievalsharp-regular"
+                className="next-round-btn"
                 onClick={() => nextRound()}
               >
                 Next round
