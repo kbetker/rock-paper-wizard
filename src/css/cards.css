@@ -21,6 +21,7 @@
 
 .card-container {
   position: relative;
+  cursor: pointer;
 }
 
 #discard-pile-img {

@@ -120,8 +120,6 @@ export const animateCards = async (
   currentCards,
   topCard,
   numOfPlayers,
-  cardBack,
-  setModal
 ) => {
   const maxNumOfCards = numOfPlayers === 6 ? 5 : numOfPlayers;
   let count = maxNumOfCards;
@@ -139,8 +137,6 @@ export const animateCards = async (
 
       const newCard = document.createElement("img");
       drawPileImg.style.opacity = "1";
-
-      newCard.onclick = () => setModal(topCard.cardImgUrl);
       newCard.src = topCard.cardImgUrl;
 
       newCard.classList.add("card");

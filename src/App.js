@@ -94,7 +94,6 @@ function App() {
           topCard,
           gameState.numOfPlayers,
           cardBack,
-          setModal
         );
       }
     };
@@ -113,6 +112,9 @@ function App() {
     setDiscardPile(discardPile_copy);
     setDisplayedCards(displayCards_copy);
   };
+  console.log("cardPile: ", cardPile)
+  console.log("discardPile: ", discardPile)
+  console.log("displayedCards: ", displayedCards)
 
   /**
    *
@@ -394,6 +396,13 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameStatus]);
 
+
+  const handleModalClick = (e) => {
+    const key = e.target.id[15]
+    const wat = currentCards.current[key]?.image
+setModal(wat.src)
+}
+
   /**
    * Return
    */
@@ -560,6 +569,7 @@ function App() {
                   key={`card-slot-${index}`}
                   id={`card-container-${index + 1}`}
                   data-cardtype="visible-card"
+                  onClick={handleModalClick}
                 >
                   {/* <img
                     onClick={() => setModal(card.cardImgUrl)}
