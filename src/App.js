@@ -165,6 +165,12 @@ function App() {
     setPlayerSetup(defaultPlayerSetup);
     setGameStatus("start-screen");
     setGameState({ players: {}, numOfPlayers: 0 });
+    setTokenContainerStatus({ isOpen: false, openedBy: ""})
+    setAWinnerIsYou("")
+    setCurrentFirstPlayer(0)
+    setCardPile(theCards)
+    setDiscardPile([])
+    setDisplayedCards([])
     currentCards.current = {};
   };
 
@@ -208,6 +214,8 @@ function App() {
     currentFirstPlayer + 1 >= gameState.numOfPlayers
     ? 0
     : currentFirstPlayer + 1;
+    console.log('Copy Game State: ', copiedGameState)
+    console.log('First Player: ', currentFirstPlayer)
     copiedGameState.players[`${currentFirstPlayer}`].firstPlayer = false;
     copiedGameState.players[`${newCurrentFP}`].firstPlayer = true;
     const newGPandLocation = await setNewGPandLocation(copiedGameState, playerTokens);
@@ -221,15 +229,6 @@ function App() {
     }, 2000);
 
   };
-
-  /**
-   *
-   */
-  // useEffect(() => {
-  //   if (gameStatus === "gameOn") {
-  //     pullFromDeck();
-  //   }
-  // }, [gameStatus]);
 
   /**
    * Initial shuffle of cards
@@ -311,14 +310,14 @@ function App() {
     }
 
     // check if all players have an icon
-    // for (let i = 0; i < players.length; i++) {
-    //   if (playerSetup[players[i]]?.name && !playerSetup[players[i]]?.icon) {
-    //     alert(
-    //       `${players[i]} is missing a pretty face. I mean, not like in a creepy way where the face is gone and there's just this red gooey mess of a bloody skull left. More like no token was selected.`
-    //     );
-    //     return;
-    //   }
-    // }
+    for (let i = 0; i < players.length; i++) {
+      if (playerSetup[players[i]]?.name && !playerSetup[players[i]]?.icon) {
+        alert(
+          `${players[i]} is missing a pretty face. I mean, not like in a creepy way where the face is gone and there's just this red gooey mess of a bloody skull left. More like no token was selected.`
+        );
+        return;
+      }
+    }
     copiedGameState.numOfPlayers = players.length;
     let count = 0;
 

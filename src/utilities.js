@@ -160,12 +160,12 @@ export const animateCards = async (
 
       await waitAMoment(10);
       drawPileImg.classList.add("card-rotate-back");
-      await waitAMoment(200);
+      await waitAMoment(400);
       newCard.classList.remove("card-rotate-front");
       await waitAMoment(10);
       drawPileImg.style.opacity = "0";
       drawPileImg.classList.remove("card-rotate-back");
-      await waitAMoment(200);
+      await waitAMoment(400);
       drawPileImg.style.opacity = "1";
     }
 
@@ -212,10 +212,10 @@ export const animateCards = async (
 
       await waitAMoment(10);
       currentCards.current[count].image.classList.add("card-rotate-front");
-      await waitAMoment(190);
+      await waitAMoment(400);
       discardPileImg.style.opacity = "1";
       discardPileImg.classList.remove("card-rotate-back");
-      await waitAMoment(200);
+      await waitAMoment(400);
       discardPileImg.classList.add("card-rotate-back");
       discardPileImg.style.opacity = "0";
       currentCards.current[count].image.remove();
@@ -240,7 +240,6 @@ export const animateGold = async (winner, goldQty) => {
 
   await golds.forEach(async (playerGP)=>{
       if (playerGP.dataset.playerName === winner.name){
-        console.log(winner.playerId)
         for(let i = 0; i < goldQty; i++){
           const newGp = document.createElement('img')
           const playerGp = document.getElementById(`player-${winner.playerId}-gp`)
