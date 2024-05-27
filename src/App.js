@@ -7,9 +7,10 @@ import {
   copyObject,
   getPlayerPositions,
   defaultPlayerSetup,
-  waitAMoment,
   checkForTriplicates,
   animateCards,
+  animateGold,
+  setNewGPandLocation,
 } from "./utilities";
 import playersGold from "./images/gp.png";
 import cardBack from "./images/card-images/_cardBack.png";
@@ -112,9 +113,6 @@ function App() {
     setDiscardPile(discardPile_copy);
     setDisplayedCards(displayCards_copy);
   };
-  console.log("cardPile: ", cardPile)
-  console.log("discardPile: ", discardPile)
-  console.log("displayedCards: ", displayedCards)
 
   /**
    *
@@ -159,30 +157,6 @@ function App() {
     setDiscardPile(copiedDiscardPile);
   };
 
-  /**
-   *
-   */
-  const setNewGPandLocation = (copiedGameState) => {
-    const playerPositions = getPlayerPositions();
-    playerPositions.firstPlace.forEach(
-      (player) => (copiedGameState.players[player].gp += 5)
-    );
-    playerPositions.secondPlace.forEach(
-      (player) => (copiedGameState.players[player].gp += 3)
-    );
-    playerPositions.playerPositions.forEach((player) => {
-      const newSquare = document.getElementById(player.newLocation);
-      const oldSquare = document.getElementById(player.oldLocation);
-      const { left, top } = newSquare.getBoundingClientRect();
-      oldSquare.dataset.occupied = "";
-      newSquare.dataset.occupied = player.playerId;
-      playerTokens.current[player.playerId].style.left = `${left}px`;
-      playerTokens.current[player.playerId].style.top = `${top}px`;
-      copiedGameState.players[player.playerId].location = player.newLocation;
-    });
-
-    return copiedGameState;
-  };
 
   /**
    * Reset game
@@ -216,8 +190,10 @@ function App() {
     });
 
     if (highest.num >= 25 && highest.players.length === 1) {
-      setAWinnerIsYou(highest.players[0]);
-      setGameStatus("someoneWon");
+      setTimeout(() => {
+        setAWinnerIsYou(highest.players[0]);
+        setGameStatus("someoneWon");
+      }, 2000);
       return true
     }
     return false
@@ -226,23 +202,24 @@ function App() {
   /**
    * next round
    */
-  const nextRound = () => {
+  const nextRound = async () => {
     const copiedGameState = copyObject(gameState);
-    const isWinner = checkForWinner(copiedGameState);
-    if(isWinner) return
-
-    pullFromDeck();
-    // const oldGameState = copyObject(gameState);
     const newCurrentFP =
-      currentFirstPlayer + 1 >= gameState.numOfPlayers
-        ? 0
-        : currentFirstPlayer + 1;
+    currentFirstPlayer + 1 >= gameState.numOfPlayers
+    ? 0
+    : currentFirstPlayer + 1;
     copiedGameState.players[`${currentFirstPlayer}`].firstPlayer = false;
     copiedGameState.players[`${newCurrentFP}`].firstPlayer = true;
-    const newGPandLocation = setNewGPandLocation(copiedGameState);
-    setGameState(newGPandLocation);
-    setCurrentFirstPlayer(newCurrentFP);
-    // clearOldPositions(oldGameState.players);
+    const newGPandLocation = await setNewGPandLocation(copiedGameState, playerTokens);
+    const isWinner = checkForWinner(copiedGameState);
+    if(!isWinner){
+      pullFromDeck()
+    }
+    setTimeout(() => {
+      setGameState(newGPandLocation);
+      setCurrentFirstPlayer(newCurrentFP);
+    }, 2000);
+
   };
 
   /**
@@ -352,6 +329,7 @@ function App() {
         const randomPlayer = players.splice(randomPlayerNum, 1);
         const copiedRandomPlayer = copyObject(playerSetup[randomPlayer]);
         copiedRandomPlayer.location = `5-${count}`;
+        copiedRandomPlayer.playerId = count
         if (count === 0) {
           copiedRandomPlayer.firstPlayer = true;
         }
@@ -630,7 +608,13 @@ setModal(wat.src)
             {/*
                 Gold pile and new round button
             */}
-            <div className="gold-pile-container">
+            <div className="gold-pile-container" id="gold-pile-container">
+            <img
+                      className="gold-pile"
+                      id="gold-pile"
+                      alt="players gold"
+                      src={playersGold}
+                    />
               <button
                 className="next-round-btn"
                 onClick={() => nextRound()}
@@ -668,9 +652,11 @@ setModal(wat.src)
                       {name}
                     </div>
                     <img
-                      className="players-gold"
+                      className={`players-gold`}
                       alt="players gold"
                       src={playersGold}
+                      data-player-name={name}
+                      id={`player-${playerKey}-gp`}
                     />
                     X
                     <input

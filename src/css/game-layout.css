@@ -58,9 +58,23 @@
 
 .gold-pile-container {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
 }
+
+.gold-pile{
+ max-width: 105px;
+}
+
+.new-gp{
+  position: fixed;
+  left: 0;
+  top: 0;
+  max-width: 105px;
+  transition: all 1s ease-in-out;
+}
+
 .gold-pile-container button {
   padding: 1rem;
   font-size: xx-large;
