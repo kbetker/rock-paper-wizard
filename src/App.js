@@ -7,9 +7,10 @@ import {
   copyObject,
   getPlayerPositions,
   defaultPlayerSetup,
-  waitAMoment,
   checkForTriplicates,
   animateCards,
+  animateGold,
+  setNewGPandLocation,
 } from "./utilities";
 import playersGold from "./images/gp.png";
 import cardBack from "./images/card-images/_cardBack.png";
@@ -94,7 +95,6 @@ function App() {
           topCard,
           gameState.numOfPlayers,
           cardBack,
-          setModal
         );
       }
     };
@@ -157,30 +157,6 @@ function App() {
     setDiscardPile(copiedDiscardPile);
   };
 
-  /**
-   *
-   */
-  const setNewGPandLocation = (copiedGameState) => {
-    const playerPositions = getPlayerPositions();
-    playerPositions.firstPlace.forEach(
-      (player) => (copiedGameState.players[player].gp += 5)
-    );
-    playerPositions.secondPlace.forEach(
-      (player) => (copiedGameState.players[player].gp += 3)
-    );
-    playerPositions.playerPositions.forEach((player) => {
-      const newSquare = document.getElementById(player.newLocation);
-      const oldSquare = document.getElementById(player.oldLocation);
-      const { left, top } = newSquare.getBoundingClientRect();
-      oldSquare.dataset.occupied = "";
-      newSquare.dataset.occupied = player.playerId;
-      playerTokens.current[player.playerId].style.left = `${left}px`;
-      playerTokens.current[player.playerId].style.top = `${top}px`;
-      copiedGameState.players[player.playerId].location = player.newLocation;
-    });
-
-    return copiedGameState;
-  };
 
   /**
    * Reset game
@@ -189,6 +165,12 @@ function App() {
     setPlayerSetup(defaultPlayerSetup);
     setGameStatus("start-screen");
     setGameState({ players: {}, numOfPlayers: 0 });
+    setTokenContainerStatus({ isOpen: false, openedBy: ""})
+    setAWinnerIsYou("")
+    setCurrentFirstPlayer(0)
+    setCardPile(theCards)
+    setDiscardPile([])
+    setDisplayedCards([])
     currentCards.current = {};
   };
 
@@ -214,39 +196,39 @@ function App() {
     });
 
     if (highest.num >= 25 && highest.players.length === 1) {
-      setAWinnerIsYou(highest.players[0]);
-      setGameStatus("someoneWon");
+      setTimeout(() => {
+        setAWinnerIsYou(highest.players[0]);
+        setGameStatus("someoneWon");
+      }, 2000);
+      return true
     }
+    return false
   };
 
   /**
    * next round
    */
-  const nextRound = () => {
-    pullFromDeck();
+  const nextRound = async () => {
     const copiedGameState = copyObject(gameState);
-    // const oldGameState = copyObject(gameState);
     const newCurrentFP =
-      currentFirstPlayer + 1 >= gameState.numOfPlayers
-        ? 0
-        : currentFirstPlayer + 1;
+    currentFirstPlayer + 1 >= gameState.numOfPlayers
+    ? 0
+    : currentFirstPlayer + 1;
+    console.log('Copy Game State: ', copiedGameState)
+    console.log('First Player: ', currentFirstPlayer)
     copiedGameState.players[`${currentFirstPlayer}`].firstPlayer = false;
     copiedGameState.players[`${newCurrentFP}`].firstPlayer = true;
-    const newGPandLocation = setNewGPandLocation(copiedGameState);
-    setGameState(newGPandLocation);
-    setCurrentFirstPlayer(newCurrentFP);
-    // clearOldPositions(oldGameState.players);
-    checkForWinner(copiedGameState);
-  };
+    const newGPandLocation = await setNewGPandLocation(copiedGameState, playerTokens);
+    const isWinner = checkForWinner(copiedGameState);
+    if(!isWinner){
+      pullFromDeck()
+    }
+    setTimeout(() => {
+      setGameState(newGPandLocation);
+      setCurrentFirstPlayer(newCurrentFP);
+    }, 2000);
 
-  /**
-   *
-   */
-  // useEffect(() => {
-  //   if (gameStatus === "gameOn") {
-  //     pullFromDeck();
-  //   }
-  // }, [gameStatus]);
+  };
 
   /**
    * Initial shuffle of cards
@@ -328,14 +310,14 @@ function App() {
     }
 
     // check if all players have an icon
-    // for (let i = 0; i < players.length; i++) {
-    //   if (playerSetup[players[i]]?.name && !playerSetup[players[i]]?.icon) {
-    //     alert(
-    //       `${players[i]} is missing a pretty face. I mean, not like in a creepy way where the face is gone and there's just this red gooey mess of a bloody skull left. More like no token was selected.`
-    //     );
-    //     return;
-    //   }
-    // }
+    for (let i = 0; i < players.length; i++) {
+      if (playerSetup[players[i]]?.name && !playerSetup[players[i]]?.icon) {
+        alert(
+          `${players[i]} is missing a pretty face. I mean, not like in a creepy way where the face is gone and there's just this red gooey mess of a bloody skull left. More like no token was selected.`
+        );
+        return;
+      }
+    }
     copiedGameState.numOfPlayers = players.length;
     let count = 0;
 
@@ -346,6 +328,7 @@ function App() {
         const randomPlayer = players.splice(randomPlayerNum, 1);
         const copiedRandomPlayer = copyObject(playerSetup[randomPlayer]);
         copiedRandomPlayer.location = `5-${count}`;
+        copiedRandomPlayer.playerId = count
         if (count === 0) {
           copiedRandomPlayer.firstPlayer = true;
         }
@@ -390,6 +373,13 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameStatus]);
 
+
+  const handleModalClick = (e) => {
+    const key = e.target.id[15]
+    const wat = currentCards.current[key]?.image
+setModal(wat.src)
+}
+
   /**
    * Return
    */
@@ -411,7 +401,7 @@ function App() {
           <img alt="Rock Paper Wizard Logo" src={RPWimg} draggable="false" />
           <button
             onClick={() => setGameStatus("setup")}
-            className="start-button medievalsharp-regular"
+            className="start-button"
           >
             Start new game
           </button>
@@ -456,7 +446,7 @@ function App() {
                   </div>
                 );
               })}
-              <button className="medievalsharp-regular" onClick={startGame}>
+              <button onClick={startGame}>
                 Start game
               </button>
               * if name is blank, it will be ignored
@@ -499,7 +489,7 @@ function App() {
       {gameStatus === "someoneWon" && (
         <div className="card-modal">
           {aWinnerIsYou && (
-            <div className="endgame-container medievalsharp-regular">
+            <div className="endgame-container">
               <div className="winner-container">
                 <img
                   alt="winner"
@@ -509,7 +499,7 @@ function App() {
                 <div>{aWinnerIsYou.name} is the winner!</div>
               </div>
               <div className="endgame-button-container">
-                <button className="medievalsharp-regular" onClick={resetGame}>
+                <button  onClick={resetGame}>
                   New Game?
                 </button>
               </div>
@@ -556,6 +546,7 @@ function App() {
                   key={`card-slot-${index}`}
                   id={`card-container-${index + 1}`}
                   data-cardtype="visible-card"
+                  onClick={handleModalClick}
                 >
                   {/* <img
                     onClick={() => setModal(card.cardImgUrl)}
@@ -579,7 +570,7 @@ function App() {
               />
             </div>
           </div>
-          {/* 
+          {/*
               GameBoard
             */}
           <div className="gameboard-region">
@@ -613,12 +604,18 @@ function App() {
                 );
               })}
             </div>
-            {/* 
+            {/*
                 Gold pile and new round button
             */}
-            <div className="gold-pile-container">
+            <div className="gold-pile-container" id="gold-pile-container">
+            <img
+                      className="gold-pile"
+                      id="gold-pile"
+                      alt="players gold"
+                      src={playersGold}
+                    />
               <button
-                className="next-round-btn medievalsharp-regular"
+                className="next-round-btn"
                 onClick={() => nextRound()}
               >
                 Next round
@@ -626,7 +623,7 @@ function App() {
             </div>
           </div>
 
-          {/* 
+          {/*
               Players
           */}
           <div className="players-region">
@@ -654,9 +651,11 @@ function App() {
                       {name}
                     </div>
                     <img
-                      className="players-gold"
+                      className={`players-gold`}
                       alt="players gold"
                       src={playersGold}
+                      data-player-name={name}
+                      id={`player-${playerKey}-gp`}
                     />
                     X
                     <input

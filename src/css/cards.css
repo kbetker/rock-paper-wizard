@@ -2,12 +2,12 @@
   position: fixed;
   left: 0;
   top: 0;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.4s ease-in-out;
   transform: perspective(400px) rotateY(0deg);
 }
 
 #draw-pile-img {
-  transition: transform 0.2s ease-in-out;
+  transition: transform 0.4s ease-in-out;
   /* transform:  rotateY(50deg); */
 }
 
@@ -21,10 +21,12 @@
 
 .card-container {
   position: relative;
+  cursor: pointer;
 }
 
 #discard-pile-img {
   z-index: -10;
+    transition: transform 0.4s ease-in-out;
 }
 
 #draw-pile-img-backer {
@@ -42,6 +44,7 @@
   height: 80%;
   /* top: 0; */
   z-index: -999;
+
 }
 
 /* #card-container-0 {

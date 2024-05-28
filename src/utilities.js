@@ -1,12 +1,14 @@
+import goldPileSrc from "./images/gp.png"
+
 /**
  * Make a deep copy
  * @param {*} inObject
  * @returns
  */
-export const copyObject = (inObject: any) => {
-  let outObject: Record<string, any>;
-  let value: string;
-  let key: string;
+export const copyObject = (inObject) => {
+  let outObject
+  let value
+  let key
 
   if (typeof inObject !== "object" || inObject === null) {
     return inObject; // Return the value if inObject is not an object
@@ -120,8 +122,6 @@ export const animateCards = async (
   currentCards,
   topCard,
   numOfPlayers,
-  cardBack,
-  setModal
 ) => {
   const maxNumOfCards = numOfPlayers === 6 ? 5 : numOfPlayers;
   let count = maxNumOfCards;
@@ -139,8 +139,6 @@ export const animateCards = async (
 
       const newCard = document.createElement("img");
       drawPileImg.style.opacity = "1";
-
-      newCard.onclick = () => setModal(topCard.cardImgUrl);
       newCard.src = topCard.cardImgUrl;
 
       newCard.classList.add("card");
@@ -155,20 +153,20 @@ export const animateCards = async (
       newCard.style.top = `${top + marginTop}px`;
 
       currentCards.current[0].container.appendChild(newCard);
-      currentCards.current[0].container.appendChild(newCard);
+      //why were there two appendChilds?
+      // currentCards.current[0].container.appendChild(newCard);
       currentCards.current[0].data = topCard;
       currentCards.current[0].image = newCard;
 
       await waitAMoment(10);
       drawPileImg.classList.add("card-rotate-back");
-      await waitAMoment(200);
+      await waitAMoment(400);
       newCard.classList.remove("card-rotate-front");
       await waitAMoment(10);
       drawPileImg.style.opacity = "0";
       drawPileImg.classList.remove("card-rotate-back");
-      await waitAMoment(200);
+      await waitAMoment(400);
       drawPileImg.style.opacity = "1";
-      // todo: animate card flip
     }
 
     /**
@@ -178,12 +176,6 @@ export const animateCards = async (
       !currentCards.current[count].data &&
       currentCards.current[count - 1].data
     ) {
-      // await waitAMoment(10);
-      // drawPileImg.classList.add("card-rotate-back");
-      // await waitAMoment(230);
-      // drawPileImg.style.opacity = "0";
-      // drawPileImg.classList.remove("card-rotate-back");
-      // await waitAMoment(10);
       drawPileImg.style.opacity = "1";
       const parentWidth = currentCards.current[count].container.offsetWidth;
       const parentHeight = currentCards.current[count].container.offsetHeight;
@@ -214,9 +206,18 @@ export const animateCards = async (
         currentCards.current["discard"].container.getBoundingClientRect();
       currentCards.current[count].image.style.left = `${left + marginLeft}px`;
       currentCards.current[count].image.style.top = `${top + marginTop}px`;
-      // const discarded = copiedDisplayedCards.pop();
-      // copiedDiscardPile.push(discarded);
-      await waitAMoment(200);
+
+      discardPileImg.style.opacity = "0";
+      discardPileImg.classList.add("card-rotate-back");
+
+      await waitAMoment(10);
+      currentCards.current[count].image.classList.add("card-rotate-front");
+      await waitAMoment(400);
+      discardPileImg.style.opacity = "1";
+      discardPileImg.classList.remove("card-rotate-back");
+      await waitAMoment(400);
+      discardPileImg.classList.add("card-rotate-back");
+      discardPileImg.style.opacity = "0";
       currentCards.current[count].image.remove();
       currentCards.current[count].image = "";
       currentCards.current[count].data = "";
@@ -226,4 +227,75 @@ export const animateCards = async (
 
     count--;
   }
+};
+
+
+export const animateGold = async (winner, goldQty) => {
+  // offsetWidth
+  // getBoundingClientRect
+  const golds = document.querySelectorAll('.players-gold')
+  const goldPileContainer = document.getElementById('gold-pile-container')
+  const goldPile = document.getElementById('gold-pile')
+  const {left: goldPileLeft, top: goldPileTop} = goldPile.getBoundingClientRect()
+
+  await golds.forEach(async (playerGP)=>{
+      if (playerGP.dataset.playerName === winner.name){
+        for(let i = 0; i < goldQty; i++){
+          const newGp = document.createElement('img')
+          const playerGp = document.getElementById(`player-${winner.playerId}-gp`)
+          const {left: playerGpLeft, top: playerGpTop} = playerGp.getBoundingClientRect()
+          newGp.src = goldPileSrc
+          newGp.classList.add('new-gp')
+          newGp.style.left = `${goldPileLeft}px`
+          newGp.style.top = `${goldPileTop}px`
+          await waitAMoment(30)
+          goldPileContainer.appendChild(newGp)
+          await waitAMoment(30)
+          newGp.style.left = `${playerGpLeft}px`
+          newGp.style.top = `${playerGpTop}px`
+          newGp.style.width = `60px`
+          newGp.style.height = `60px`
+          setTimeout(() => {
+            newGp.remove()
+          }, 1000);
+        }
+
+      }
+  })
+
+}
+
+
+/**
+*
+*/
+export const setNewGPandLocation = async (copiedGameState, playerTokens) => {
+ const playerPositions = getPlayerPositions();
+
+ playerPositions.firstPlace.forEach(
+   async (player) => {
+    copiedGameState.players[player].gp += 5;
+    await waitAMoment(500)
+    await animateGold(copiedGameState.players[player], 5)
+  }
+ );
+ playerPositions.secondPlace.forEach(
+   async (player) => {
+    copiedGameState.players[player].gp += 3;
+    await waitAMoment(500)
+    await animateGold(copiedGameState.players[player], 3)
+  }
+ );
+ playerPositions.playerPositions.forEach((player) => {
+   const newSquare = document.getElementById(player.newLocation);
+   const oldSquare = document.getElementById(player.oldLocation);
+   const { left, top } = newSquare.getBoundingClientRect();
+   oldSquare.dataset.occupied = "";
+   newSquare.dataset.occupied = player.playerId;
+   playerTokens.current[player.playerId].style.left = `${left}px`;
+   playerTokens.current[player.playerId].style.top = `${top}px`;
+   copiedGameState.players[player.playerId].location = player.newLocation;
+ });
+
+ return copiedGameState;
 };
