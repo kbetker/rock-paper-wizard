@@ -15,10 +15,6 @@
   grid-template-columns: repeat(7, 1fr);
 }
 
-.card-container {
-  /* border: 1px solid yellow; */
-}
-
 .gameboard-region {
   margin-inline: 4rem;
   display: grid;
@@ -132,6 +128,7 @@
 
 .card-container img {
   width: 80%;
+  height: 80%;
   cursor: pointer;
   -webkit-user-select: none; /* Safari */
   -moz-user-select: none; /* Firefox */
@@ -153,8 +150,18 @@
   position: fixed;
   top: 0;
   width: 100%;
+  z-index: 99;
 }
 
 .card-modal img {
   height: 90vh;
+}
+
+.player-img {
+  max-height: 80px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  transition: all 0.5s ease-in-out;
+  pointer-events: none;
 }

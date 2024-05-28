@@ -1,0 +1,65 @@
+.card {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transition: all 0.2s ease-in-out;
+  transform: perspective(400px) rotateY(0deg);
+}
+
+#draw-pile-img {
+  transition: transform 0.2s ease-in-out;
+  /* transform:  rotateY(50deg); */
+}
+
+.card-rotate-front {
+  transform: perspective(400px) rotateY(-90deg);
+}
+
+.card-rotate-back {
+  transform: perspective(400px) rotateY(90deg);
+}
+
+.card-container {
+  position: relative;
+}
+
+#discard-pile-img {
+  z-index: -10;
+}
+
+#draw-pile-img-backer {
+  position: absolute;
+  width: 80%;
+  height: 80%;
+  /* left: 0; */
+  /* top: 0; */
+  z-index: -999;
+}
+
+#discard-pile-img-backer {
+  position: absolute;
+  width: 80%;
+  height: 80%;
+  /* top: 0; */
+  z-index: -999;
+}
+
+/* #card-container-0 {
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+} */
+
+/* @keyframes rotate-front {
+  0% {
+    transform: perspective(800px) rotateY(-80deg);
+  }
+
+  50% {
+    transform: perspective(800px) rotateY(-80deg);
+  }
+
+  100% {
+    transform: perspective(800px) rotateY(0deg);
+  }
+} */

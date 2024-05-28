@@ -6,25 +6,28 @@ import selectImage from "./images/player-tokens/selectImage.png";
 import {
   copyObject,
   getPlayerPositions,
-  clearOldPositions,
   defaultPlayerSetup,
+  waitAMoment,
+  checkForTriplicates,
+  animateCards,
 } from "./utilities";
 import playersGold from "./images/gp.png";
 import cardBack from "./images/card-images/_cardBack.png";
-// load screen - input screen - play screen
-
-// 25gp wins game
 
 function App() {
+  // todo : bugfix - new game cards not auto-cycling
+  // todo: bugfix - cards not cycling with 5/6 players cards
   const [gameStatus, setGameStatus] = useState("start-screen");
   const [savedEvent, setSavedEvent] = useState("");
   const [modal, setModal] = useState("");
   const [aWinnerIsYou, setAWinnerIsYou] = useState("");
   const [cardPile, setCardPile] = useState(theCards);
-  const [currentCards, setCurrentCards] = useState([]);
+  const currentCards = useRef(null);
+  const [displayedCards, setDisplayedCards] = useState([]);
   const [discardPile, setDiscardPile] = useState([]);
   const [currentFirstPlayer, setCurrentFirstPlayer] = useState(0);
   const gameBoardContainer = useRef(null);
+  const playerTokens = useRef(null);
   const [tokenContainerStatus, setTokenContainerStatus] = useState({
     isOpen: false,
     openedBy: "",
@@ -51,69 +54,91 @@ function App() {
   /**
    * Pull top card from deck
    */
-  const pullFromDeck = () => {
+  const pullFromDeck = async () => {
     // check if more than 2 of same type
     // if current length > than num of players - discard 1
     // if deck is empty, shuffle discard and set to card pile
-    const copiedCurrentCards = copyObject(currentCards);
-    const copiedCardPile = copyObject(cardPile);
-    let copiedDiscardPile = copyObject(discardPile);
+    const displayCards_copy = copyObject(displayedCards);
+    const cardPile_copy = copyObject(cardPile);
+    let discardPile_copy = copyObject(discardPile);
     const numOfCards =
       gameState.numOfPlayers === 6 ? 5 : gameState.numOfPlayers;
 
-    const checkForTriplicates = (cards, topCard) => {
-      const cardTypes = { red: 0, blue: 0, green: 0 };
-      for (let i = 0; i < cards.length; i++) {
-        const { cardType } = cards[i];
-        cardTypes[cardType]++;
+    // check if deck needs to be reshuffled when pile is empty
+    const reshuffle = () => {
+      if (cardPile_copy.length === 0) {
+        const shuffledDiscardDeck = shuffleCards(discardPile_copy);
+        cardPile_copy.push(...shuffledDiscardDeck);
+        discardPile_copy = [];
       }
-      cardTypes[topCard.cardType]++;
-      if (cardTypes[topCard.cardType] >= 3) {
-        return true;
-      }
-      return false;
     };
 
-    const takeTopCard = () => {
-      if (copiedCardPile.length === 0) {
-        const shuffledDiscardDeck = shuffleCards(copiedDiscardPile);
-        copiedCardPile.push(...shuffledDiscardDeck);
-        copiedDiscardPile = [];
-      }
-      if (copiedCurrentCards.length === numOfCards) {
-        const lastCard = copiedCurrentCards.pop();
-        copiedDiscardPile.push(lastCard);
+    const takeTopCard = async () => {
+      reshuffle();
+      // discards if last card
+      if (displayCards_copy.length === numOfCards) {
+        const lastCard = displayCards_copy.pop();
+        discardPile_copy.push(lastCard);
       }
 
-      const topCard = copiedCardPile.pop();
-      const triplicate = checkForTriplicates(copiedCurrentCards, topCard);
+      const topCard = cardPile_copy.pop();
+      const isTriplicate = checkForTriplicates(displayCards_copy, topCard);
 
-      if (triplicate) {
-        copiedDiscardPile.push(topCard);
-        takeTopCard();
+      if (isTriplicate) {
+        discardPile_copy.push(topCard);
+        await takeTopCard();
       } else {
-        copiedCurrentCards.unshift(topCard);
+        displayCards_copy.unshift(topCard);
+        await animateCards(
+          currentCards,
+          topCard,
+          gameState.numOfPlayers,
+          cardBack,
+          setModal
+        );
       }
     };
 
-    if (copiedCurrentCards.length < numOfCards) {
-      for (let i = copiedCurrentCards.length; i < gameState.numOfPlayers; i++) {
-        takeTopCard();
+    if (displayCards_copy.length < numOfCards) {
+      for (let i = displayCards_copy.length; i < numOfCards; i++) {
+        await takeTopCard();
       }
     } else {
-      takeTopCard();
+      await takeTopCard();
     }
 
-    if (copiedCardPile.length === 0) {
-      const shuffledDiscardDeck = shuffleCards(copiedDiscardPile);
-      copiedCardPile.push(...shuffledDiscardDeck);
-      copiedDiscardPile = [];
-    }
+    reshuffle();
 
-    setCardPile(copiedCardPile);
-    setDiscardPile(copiedDiscardPile);
-    setCurrentCards(copiedCurrentCards);
+    setCardPile(cardPile_copy);
+    setDiscardPile(discardPile_copy);
+    setDisplayedCards(displayCards_copy);
   };
+
+  /**
+   *
+   */
+  useEffect(() => {
+    if (gameStatus === "gameOn") {
+      const cardContainersInit = {};
+      const cardContainerNodes = document.querySelectorAll(".card-container");
+      cardContainerNodes.forEach((cardElement) => {
+        const idNum = Number(cardElement.id.replace(/^\D+/g, ""));
+        if (cardElement.dataset.cardtype === "discard-pile") {
+          cardContainersInit.discard = {};
+          cardContainersInit.discard.container = cardElement;
+        } else {
+          cardContainersInit[idNum] = {};
+          cardContainersInit[idNum].container = cardElement;
+          cardContainersInit[idNum].image = "";
+          cardContainersInit[idNum].data = "";
+        }
+      });
+
+      cardContainersInit.numOfCards = 0;
+      currentCards.current = cardContainersInit;
+      pullFromDeck();
+    }
+  }, [gameStatus]);
 
   /**
    * Wild Magc
@@ -136,7 +161,6 @@ function App() {
    *
    */
   const setNewGPandLocation = (copiedGameState) => {
-    // const copiedGameState = copyObject(gameState);
     const playerPositions = getPlayerPositions();
     playerPositions.firstPlace.forEach(
       (player) => (copiedGameState.players[player].gp += 5)
@@ -144,18 +168,28 @@ function App() {
     playerPositions.secondPlace.forEach(
       (player) => (copiedGameState.players[player].gp += 3)
     );
-    playerPositions.playerPositions.forEach(
-      (player) =>
-        (copiedGameState.players[player.playerId].location = player.newLocation)
-    );
+    playerPositions.playerPositions.forEach((player) => {
+      const newSquare = document.getElementById(player.newLocation);
+      const oldSquare = document.getElementById(player.oldLocation);
+      const { left, top } = newSquare.getBoundingClientRect();
+      oldSquare.dataset.occupied = "";
+      newSquare.dataset.occupied = player.playerId;
+      playerTokens.current[player.playerId].style.left = `${left}px`;
+      playerTokens.current[player.playerId].style.top = `${top}px`;
+      copiedGameState.players[player.playerId].location = player.newLocation;
+    });
 
     return copiedGameState;
   };
 
+  /**
+   * Reset game
+   */
   const resetGame = () => {
     setPlayerSetup(defaultPlayerSetup);
     setGameStatus("start-screen");
     setGameState({ players: {}, numOfPlayers: 0 });
+    currentCards.current = {};
   };
 
   /**
@@ -191,29 +225,28 @@ function App() {
   const nextRound = () => {
     pullFromDeck();
     const copiedGameState = copyObject(gameState);
-    const oldGameState = copyObject(gameState);
+    // const oldGameState = copyObject(gameState);
     const newCurrentFP =
       currentFirstPlayer + 1 >= gameState.numOfPlayers
         ? 0
         : currentFirstPlayer + 1;
     copiedGameState.players[`${currentFirstPlayer}`].firstPlayer = false;
     copiedGameState.players[`${newCurrentFP}`].firstPlayer = true;
-
     const newGPandLocation = setNewGPandLocation(copiedGameState);
     setGameState(newGPandLocation);
     setCurrentFirstPlayer(newCurrentFP);
-    clearOldPositions(oldGameState.players);
+    // clearOldPositions(oldGameState.players);
     checkForWinner(copiedGameState);
   };
 
   /**
    *
    */
-  useEffect(() => {
-    if (gameStatus === "gameOn") {
-      pullFromDeck();
-    }
-  }, [gameStatus]);
+  // useEffect(() => {
+  //   if (gameStatus === "gameOn") {
+  //     pullFromDeck();
+  //   }
+  // }, [gameStatus]);
 
   /**
    * Initial shuffle of cards
@@ -256,23 +289,21 @@ function App() {
    * @param {*} e
    */
   const handleRowClick = (e) => {
-    const eBoundingRect = e.target.getBoundingClientRect();
-    // const wat = document.getElementById("playa1");
-    // wat.style.left = `${eBoundingRect.left}px`;
-    // wat.style.top = `${eBoundingRect.top}px`;
-
-    console.log("%ceBoundingRect:", "color: lime", eBoundingRect);
-    console.log(gameBoardContainer.current);
+    const { left, top } = e.target.getBoundingClientRect();
+    const isPlayerHere = e.target.dataset?.occupied;
+    const playerNum = savedEvent?.target?.dataset?.occupied;
     const copiedGameState = copyObject(gameState);
-    if (!e.target.dataset.occupied && savedEvent) {
-      const playerNum = savedEvent.target.dataset.occupied;
-      savedEvent.target.style.backgroundImage = "";
+
+    if (!isPlayerHere && savedEvent) {
+      e.target.dataset.occupied = playerNum;
       savedEvent.target.dataset.occupied = "";
       savedEvent.target.classList.remove("move-it");
-      setSavedEvent("");
+      playerTokens.current[playerNum].style.left = `${left}px`;
+      playerTokens.current[playerNum].style.top = `${top}px`;
       copiedGameState.players[playerNum].location = e.target.id;
+      setSavedEvent("");
       setGameState(copiedGameState);
-    } else if (e.target.dataset.occupied) {
+    } else if (isPlayerHere) {
       if (savedEvent?.target?.classList) {
         savedEvent.target.classList.remove("move-it");
       }
@@ -297,14 +328,14 @@ function App() {
     }
 
     // check if all players have an icon
-    for (let i = 0; i < players.length; i++) {
-      if (playerSetup[players[i]]?.name && !playerSetup[players[i]]?.icon) {
-        alert(
-          `${players[i]} is missing a pretty face. I mean, not like in a creepy way where the face is gone and there's just this red gooey mess of a bloody skull left. More like no token was selected.`
-        );
-        return;
-      }
-    }
+    // for (let i = 0; i < players.length; i++) {
+    //   if (playerSetup[players[i]]?.name && !playerSetup[players[i]]?.icon) {
+    //     alert(
+    //       `${players[i]} is missing a pretty face. I mean, not like in a creepy way where the face is gone and there's just this red gooey mess of a bloody skull left. More like no token was selected.`
+    //     );
+    //     return;
+    //   }
+    // }
     copiedGameState.numOfPlayers = players.length;
     let count = 0;
 
@@ -333,21 +364,31 @@ function App() {
    */
   const handleMoneys = (playerKey, value) => {
     const copiedGameState = copyObject(gameState);
-    copiedGameState.players[playerKey].gp = value;
+    copiedGameState.players[playerKey].gp = Number(value);
     setGameState(copiedGameState);
   };
 
-  const setLocation = (player, playerNum) => {
-    const copiedPlayer = copyObject(player);
-    const { location, icon } = copiedPlayer;
-
-    setTimeout(() => {
-      const marker = document.getElementById(location);
-      const backgroundImg = imageTokens[icon].url;
-      marker.style.backgroundImage = `url(${backgroundImg})`;
-      marker.dataset.occupied = playerNum;
-    }, 10);
-  };
+  useEffect(() => {
+    if (gameStatus === "gameOn") {
+      const playerTokensInit = {};
+      Object.keys(gameState.players).forEach((key) => {
+        const playerIcon = gameState.players[key].icon;
+        const imgUrl = imageTokens[playerIcon]?.url || "";
+        const playerSquare = document.getElementById(`5-${key}`);
+        const { left, top } = playerSquare?.getBoundingClientRect();
+        const player = playerSquare.appendChild(document.createElement("img"));
+        player.classList.add("player-img");
+        player.id = `player-${key}`;
+        player.src = imgUrl;
+        player.style.left = `${left}px`;
+        player.style.top = `${top}px`;
+        playerSquare.dataset.occupied = key;
+        playerTokensInit[key] = player;
+      });
+      playerTokens.current = playerTokensInit;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameStatus]);
 
   /**
    * Return
@@ -377,13 +418,6 @@ function App() {
         </div>
       )}
 
-      {/* <img
-        alt="poo"
-        id="playa1"
-        className="icon-move-test"
-        src={imageTokens["rogue"].url}
-      /> */}
-
       {/* /**
        * setup
        */}
@@ -410,6 +444,7 @@ function App() {
                       alt="selected-token-img"
                       className="selected-token"
                       src={tokenImg ? tokenImg : selectImage}
+                      draggable="false"
                       onClick={() => [
                         handlePlayerInput(`player${num + 1}`, { icon: null }),
                         setTokenContainerStatus({
@@ -441,6 +476,7 @@ function App() {
                         src={url}
                         key={`token-img-${index}`}
                         className="token-img"
+                        draggable="false"
                         onClick={() => [
                           handlePlayerInput(tokenContainerStatus.openedBy, {
                             icon: name,
@@ -464,7 +500,7 @@ function App() {
         <div className="card-modal">
           {aWinnerIsYou && (
             <div className="endgame-container medievalsharp-regular">
-              <div class="winner-container">
+              <div className="winner-container">
                 <img
                   alt="winner"
                   className="winner-icon"
@@ -472,7 +508,7 @@ function App() {
                 />
                 <div>{aWinnerIsYou.name} is the winner!</div>
               </div>
-              <div class="endgame-button-container">
+              <div className="endgame-button-container">
                 <button className="medievalsharp-regular" onClick={resetGame}>
                   New Game?
                 </button>
@@ -496,33 +532,52 @@ function App() {
            * Cards region
            */}
           <div className="cards-region">
-            {cardPile.length > 0 ? (
-              <div className="card-container cardpile">
-                <img
-                  onClick={() => wildMagic()}
-                  alt="card pile"
-                  src={cardBack}
-                />
-              </div>
-            ) : (
-              <div className="card-container empty-card-pile"></div>
-            )}
-            {currentCards.map((card, index) => {
+            <div
+              className="card-container cardpile"
+              id="card-container-0"
+              data-cardtype="card-pile"
+            >
+              <img
+                onClick={() => wildMagic()}
+                alt="card pile"
+                src={cardBack}
+                id="draw-pile-img"
+              />
+
+              <img alt="card pile" src={cardBack} id="draw-pile-img-backer" />
+            </div>
+
+            {makeAnArray(
+              gameState.numOfPlayers === 6 ? 5 : gameState.numOfPlayers
+            ).map((card, index) => {
               return (
-                <div className="card-container" key={`card-slot-${index}`}>
-                  <img
+                <div
+                  className="card-container"
+                  key={`card-slot-${index}`}
+                  id={`card-container-${index + 1}`}
+                  data-cardtype="visible-card"
+                >
+                  {/* <img
                     onClick={() => setModal(card.cardImgUrl)}
-                    alt="card pile"
+                    alt="current card pile"
                     src={card.cardImgUrl}
-                  />
+                  /> */}
                 </div>
               );
             })}
-            {discardPile.length > 0 && (
-              <div className="card-container discardpile">
-                <img alt="discard pile" src={cardBack} />
-              </div>
-            )}
+
+            <div
+              className="card-container"
+              id={`card-container-${gameState.numOfPlayers + 1}`}
+              data-cardtype="discard-pile"
+            >
+              <img alt="discard pile" src={cardBack} id="discard-pile-img" />
+              <img
+                alt="discard pile backer"
+                src={cardBack}
+                id="discard-pile-img-backer"
+              />
+            </div>
           </div>
           {/* 
               GameBoard
@@ -579,9 +634,9 @@ function App() {
               if (playerKey) {
                 const { gp, icon, name, firstPlayer, location } =
                   gameState.players[playerKey];
-                const iconUrl = imageTokens[icon].url;
+                const iconUrl = imageTokens[icon]?.url || "";
 
-                setLocation(gameState.players[playerKey], playerKey);
+                // setLocation(gameState.players[playerKey], playerKey);
 
                 return (
                   <div
@@ -607,7 +662,7 @@ function App() {
                     <input
                       type="number"
                       value={gameState.players[playerKey].gp}
-                      onChange={() => handleMoneys(playerKey)}
+                      onChange={(e) => handleMoneys(playerKey, e.target.value)}
                     />
                   </div>
                 );
