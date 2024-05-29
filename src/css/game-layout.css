@@ -63,15 +63,25 @@
   align-items: center;
 }
 
-.gold-pile{
- max-width: 105px;
+.gold-pile-wrapper {
+  width: 275px;
+  height: 275px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: url("../images/pileOfGold.png");
 }
 
-.new-gp{
+.gold-pile {
+  max-width: 105px;
+}
+
+.new-gp {
   position: fixed;
   left: 0;
   top: 0;
-  max-width: 105px;
+  width: 125px;
+  height: 125px;
   transition: all 1s ease-in-out;
 }
 

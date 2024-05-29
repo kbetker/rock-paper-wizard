@@ -1,4 +1,5 @@
-import goldPileSrc from "./images/gp.png"
+import goldPileSrc from "./images/gp.png";
+import newGpSrc from "./images/newGp.png";
 
 /**
  * Make a deep copy
@@ -6,9 +7,9 @@ import goldPileSrc from "./images/gp.png"
  * @returns
  */
 export const copyObject = (inObject) => {
-  let outObject
-  let value
-  let key
+  let outObject;
+  let value;
+  let key;
 
   if (typeof inObject !== "object" || inObject === null) {
     return inObject; // Return the value if inObject is not an object
@@ -118,11 +119,7 @@ export const checkForTriplicates = (cards, topCard) => {
   return false;
 };
 
-export const animateCards = async (
-  currentCards,
-  topCard,
-  numOfPlayers,
-) => {
+export const animateCards = async (currentCards, topCard, numOfPlayers) => {
   const maxNumOfCards = numOfPlayers === 6 ? 5 : numOfPlayers;
   let count = maxNumOfCards;
   const drawPileImg = document.getElementById("draw-pile-img");
@@ -160,12 +157,12 @@ export const animateCards = async (
 
       await waitAMoment(10);
       drawPileImg.classList.add("card-rotate-back");
-      await waitAMoment(400);
+      await waitAMoment(300);
       newCard.classList.remove("card-rotate-front");
       await waitAMoment(10);
       drawPileImg.style.opacity = "0";
       drawPileImg.classList.remove("card-rotate-back");
-      await waitAMoment(400);
+      await waitAMoment(300);
       drawPileImg.style.opacity = "1";
     }
 
@@ -212,10 +209,10 @@ export const animateCards = async (
 
       await waitAMoment(10);
       currentCards.current[count].image.classList.add("card-rotate-front");
-      await waitAMoment(400);
+      await waitAMoment(300);
       discardPileImg.style.opacity = "1";
       discardPileImg.classList.remove("card-rotate-back");
-      await waitAMoment(400);
+      await waitAMoment(300);
       discardPileImg.classList.add("card-rotate-back");
       discardPileImg.style.opacity = "0";
       currentCards.current[count].image.remove();
@@ -229,73 +226,74 @@ export const animateCards = async (
   }
 };
 
-
 export const animateGold = async (winner, goldQty) => {
   // offsetWidth
   // getBoundingClientRect
-  const golds = document.querySelectorAll('.players-gold')
-  const goldPileContainer = document.getElementById('gold-pile-container')
-  const goldPile = document.getElementById('gold-pile')
-  const {left: goldPileLeft, top: goldPileTop} = goldPile.getBoundingClientRect()
+  const golds = document.querySelectorAll(".players-gold");
+  const goldPileContainer = document.getElementById("gold-pile-container");
+  const goldPile = document.getElementById("gold-pile");
+  const { left: goldPileLeft, top: goldPileTop } =
+    goldPile.getBoundingClientRect();
 
-  await golds.forEach(async (playerGP)=>{
-      if (playerGP.dataset.playerName === winner.name){
-        for(let i = 0; i < goldQty; i++){
-          const newGp = document.createElement('img')
-          const playerGp = document.getElementById(`player-${winner.playerId}-gp`)
-          const {left: playerGpLeft, top: playerGpTop} = playerGp.getBoundingClientRect()
-          newGp.src = goldPileSrc
-          newGp.classList.add('new-gp')
-          newGp.style.left = `${goldPileLeft}px`
-          newGp.style.top = `${goldPileTop}px`
-          await waitAMoment(30)
-          goldPileContainer.appendChild(newGp)
-          await waitAMoment(30)
-          newGp.style.left = `${playerGpLeft}px`
-          newGp.style.top = `${playerGpTop}px`
-          newGp.style.width = `60px`
-          newGp.style.height = `60px`
-          setTimeout(() => {
-            newGp.remove()
-          }, 1000);
-        }
-
+  await golds.forEach(async (playerGP) => {
+    if (playerGP.dataset.playerName === winner.name) {
+      for (let i = 0; i < goldQty; i++) {
+        const newGp = document.createElement("img");
+        const playerGp = document.getElementById(
+          `player-${winner.playerId}-gp`
+        );
+        const { left: playerGpLeft, top: playerGpTop } =
+          playerGp.getBoundingClientRect();
+        newGp.src = newGpSrc;
+        newGp.classList.add("new-gp");
+        newGp.style.left = `${goldPileLeft}px`;
+        newGp.style.top = `${goldPileTop}px`;
+        await waitAMoment(50);
+        goldPileContainer.appendChild(newGp);
+        await waitAMoment(50);
+        newGp.style.zIndex = `${100 + i}`;
+        newGp.style.left = `${playerGpLeft}px`;
+        newGp.style.top = `${playerGpTop}px`;
+        newGp.style.width = `70px`;
+        newGp.style.height = `70px`;
+        setTimeout(() => {
+          newGp.remove();
+        }, 1000);
       }
-  })
-
-}
-
+    }
+  });
+};
 
 /**
-*
-*/
+ *
+ */
 export const setNewGPandLocation = async (copiedGameState, playerTokens) => {
- const playerPositions = getPlayerPositions();
+  const playerPositions = getPlayerPositions();
 
- playerPositions.firstPlace.forEach(
-   async (player) => {
+  for (let i = 0; i < playerPositions.firstPlace.length; i++) {
+    const player = playerPositions.firstPlace[i];
     copiedGameState.players[player].gp += 5;
-    await waitAMoment(500)
-    await animateGold(copiedGameState.players[player], 5)
+    await animateGold(copiedGameState.players[player], 5);
+    await waitAMoment(800);
   }
- );
- playerPositions.secondPlace.forEach(
-   async (player) => {
-    copiedGameState.players[player].gp += 3;
-    await waitAMoment(500)
-    await animateGold(copiedGameState.players[player], 3)
-  }
- );
- playerPositions.playerPositions.forEach((player) => {
-   const newSquare = document.getElementById(player.newLocation);
-   const oldSquare = document.getElementById(player.oldLocation);
-   const { left, top } = newSquare.getBoundingClientRect();
-   oldSquare.dataset.occupied = "";
-   newSquare.dataset.occupied = player.playerId;
-   playerTokens.current[player.playerId].style.left = `${left}px`;
-   playerTokens.current[player.playerId].style.top = `${top}px`;
-   copiedGameState.players[player.playerId].location = player.newLocation;
- });
 
- return copiedGameState;
+  for (let i = 0; i < playerPositions.secondPlace.length; i++) {
+    const player = playerPositions.secondPlace[i];
+    copiedGameState.players[player].gp += 3;
+    await animateGold(copiedGameState.players[player], 3);
+    await waitAMoment(800);
+  }
+
+  playerPositions.playerPositions.forEach((player) => {
+    const newSquare = document.getElementById(player.newLocation);
+    const oldSquare = document.getElementById(player.oldLocation);
+    const { left, top } = newSquare.getBoundingClientRect();
+    oldSquare.dataset.occupied = "";
+    newSquare.dataset.occupied = player.playerId;
+    playerTokens.current[player.playerId].style.left = `${left}px`;
+    playerTokens.current[player.playerId].style.top = `${top}px`;
+    copiedGameState.players[player.playerId].location = player.newLocation;
+  });
+
+  return copiedGameState;
 };

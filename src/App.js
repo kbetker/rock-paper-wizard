@@ -11,6 +11,7 @@ import {
   animateCards,
   animateGold,
   setNewGPandLocation,
+  waitAMoment,
 } from "./utilities";
 import playersGold from "./images/gp.png";
 import cardBack from "./images/card-images/_cardBack.png";
@@ -20,6 +21,7 @@ function App() {
   // todo: bugfix - cards not cycling with 5/6 players cards
   const [gameStatus, setGameStatus] = useState("start-screen");
   const [savedEvent, setSavedEvent] = useState("");
+  const [particles, setParticles] = useState([]);
   const [modal, setModal] = useState("");
   const [aWinnerIsYou, setAWinnerIsYou] = useState("");
   const [cardPile, setCardPile] = useState(theCards);
@@ -29,6 +31,7 @@ function App() {
   const [currentFirstPlayer, setCurrentFirstPlayer] = useState(0);
   const gameBoardContainer = useRef(null);
   const playerTokens = useRef(null);
+  const backgroundContainer = useRef(null);
   const [tokenContainerStatus, setTokenContainerStatus] = useState({
     isOpen: false,
     openedBy: "",
@@ -51,6 +54,59 @@ function App() {
     }
     return shuffledDeck;
   };
+
+  // not working well. Changing animation duration causes the
+  // backgroun to jump back to 0% in keyframes
+  // const changeBackgroundSpeed = async () => {
+  //   let highest = 0;
+  //   Object.keys(gameState.players).forEach((player) => {
+  //     const currPlayer = gameState.players[player];
+  //     if (currPlayer.gp > highest) {
+  //       highest = currPlayer.gp;
+  //     }
+  //   });
+  //   let newSpeed = 90 - highest * 3 < 15 ? 15 : 90 - highest * 3;
+  //   backgroundContainer.current.style.animationDuration = `${newSpeed}s`;
+  // };
+
+  // useEffect(() => {
+  //   changeBackgroundSpeed();
+  // }, [gameState]);
+
+  function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min) + min);
+  }
+
+  const makeParticles = () => {
+    const numOfParticles = 100;
+    const calcSpace = window.innerWidth / Math.floor(numOfParticles);
+    const newArray = [];
+    let spacing = 0;
+    for (let i = 0; i < numOfParticles; i++) {
+      const speed = getRandomInt(15000, 19000);
+      const delay = getRandomInt(0, speed) * -1;
+      const size = getRandomInt(1, 4);
+      newArray.push(
+        <div
+          key={`particle-${i}`}
+          className="particle"
+          style={{
+            top: `${spacing}px`,
+            animationDuration: `${speed}ms`,
+            animationDelay: `${delay}ms`,
+            width: `${size}px`,
+            height: `${size}px`,
+          }}
+        ></div>
+      );
+      spacing += calcSpace;
+    }
+    setParticles(newArray);
+  };
+
+  useEffect(() => {
+    makeParticles();
+  }, []);
 
   /**
    * Pull top card from deck
@@ -94,7 +150,7 @@ function App() {
           currentCards,
           topCard,
           gameState.numOfPlayers,
-          cardBack,
+          cardBack
         );
       }
     };
@@ -157,7 +213,6 @@ function App() {
     setDiscardPile(copiedDiscardPile);
   };
 
-
   /**
    * Reset game
    */
@@ -165,19 +220,19 @@ function App() {
     setPlayerSetup(defaultPlayerSetup);
     setGameStatus("start-screen");
     setGameState({ players: {}, numOfPlayers: 0 });
-    setTokenContainerStatus({ isOpen: false, openedBy: ""})
-    setAWinnerIsYou("")
-    setCurrentFirstPlayer(0)
-    setCardPile(theCards)
-    setDiscardPile([])
-    setDisplayedCards([])
+    setTokenContainerStatus({ isOpen: false, openedBy: "" });
+    setAWinnerIsYou("");
+    setCurrentFirstPlayer(0);
+    setCardPile(theCards);
+    setDiscardPile([]);
+    setDisplayedCards([]);
     currentCards.current = {};
   };
 
   /**
    * Check for winner
    */
-  const checkForWinner = (copiedGameState) => {
+  const checkForWinner = (copiedGameState, delay) => {
     const highest = { num: 0, players: [] };
     Object.keys(copiedGameState.players).forEach((key) => {
       const player = copiedGameState.players[key];
@@ -199,10 +254,10 @@ function App() {
       setTimeout(() => {
         setAWinnerIsYou(highest.players[0]);
         setGameStatus("someoneWon");
-      }, 2000);
-      return true
+      }, delay);
+      return true;
     }
-    return false
+    return false;
   };
 
   /**
@@ -210,24 +265,26 @@ function App() {
    */
   const nextRound = async () => {
     const copiedGameState = copyObject(gameState);
+    const firstCheck = checkForWinner(copiedGameState, 50);
+    if (firstCheck) return;
     const newCurrentFP =
-    currentFirstPlayer + 1 >= gameState.numOfPlayers
-    ? 0
-    : currentFirstPlayer + 1;
-    console.log('Copy Game State: ', copiedGameState)
-    console.log('First Player: ', currentFirstPlayer)
+      currentFirstPlayer + 1 >= gameState.numOfPlayers
+        ? 0
+        : currentFirstPlayer + 1;
     copiedGameState.players[`${currentFirstPlayer}`].firstPlayer = false;
     copiedGameState.players[`${newCurrentFP}`].firstPlayer = true;
-    const newGPandLocation = await setNewGPandLocation(copiedGameState, playerTokens);
-    const isWinner = checkForWinner(copiedGameState);
-    if(!isWinner){
-      pullFromDeck()
+    const newGPandLocation = await setNewGPandLocation(
+      copiedGameState,
+      playerTokens
+    );
+    const secondCheck = checkForWinner(copiedGameState, 2000);
+    if (!secondCheck) {
+      pullFromDeck();
     }
     setTimeout(() => {
       setGameState(newGPandLocation);
       setCurrentFirstPlayer(newCurrentFP);
     }, 2000);
-
   };
 
   /**
@@ -310,14 +367,14 @@ function App() {
     }
 
     // check if all players have an icon
-    for (let i = 0; i < players.length; i++) {
-      if (playerSetup[players[i]]?.name && !playerSetup[players[i]]?.icon) {
-        alert(
-          `${players[i]} is missing a pretty face. I mean, not like in a creepy way where the face is gone and there's just this red gooey mess of a bloody skull left. More like no token was selected.`
-        );
-        return;
-      }
-    }
+    // for (let i = 0; i < players.length; i++) {
+    //   if (playerSetup[players[i]]?.name && !playerSetup[players[i]]?.icon) {
+    //     alert(
+    //       `${players[i]} is missing a pretty face. I mean, not like in a creepy way where the face is gone and there's just this red gooey mess of a bloody skull left. More like no token was selected.`
+    //     );
+    //     return;
+    //   }
+    // }
     copiedGameState.numOfPlayers = players.length;
     let count = 0;
 
@@ -328,7 +385,7 @@ function App() {
         const randomPlayer = players.splice(randomPlayerNum, 1);
         const copiedRandomPlayer = copyObject(playerSetup[randomPlayer]);
         copiedRandomPlayer.location = `5-${count}`;
-        copiedRandomPlayer.playerId = count
+        copiedRandomPlayer.playerId = count;
         if (count === 0) {
           copiedRandomPlayer.firstPlayer = true;
         }
@@ -373,22 +430,40 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameStatus]);
 
-
   const handleModalClick = (e) => {
-    const key = e.target.id[15]
-    const wat = currentCards.current[key]?.image
-setModal(wat.src)
-}
-
+    const key = e.target.id[15];
+    const wat = currentCards.current[key]?.image;
+    setModal(wat.src);
+  };
+  // const particleArray = makeParticles();
   /**
    * Return
    */
   return (
     <div className="main-container">
+      {/**
+       * Particl wrapper
+       */}
+      <div className="particle-wrapper">
+        <div
+          className="particle-and-foreground-container"
+          // style={{
+          //   width: `${window.innerWidth}px`,
+          //   height: `${window.innerHeight}px`,
+          // }}
+        >
+          <div className="particles-container">
+            {particles.map((el) => {
+              return el;
+            })}
+          </div>
+        </div>
+      </div>
+
       {/* /**
        * Background container
        */}
-      <div className="background-container">
+      <div className="background-container" ref={backgroundContainer}>
         <div className="blue-gradient"></div>
         <div className="orange-gradient"></div>
       </div>
@@ -446,10 +521,8 @@ setModal(wat.src)
                   </div>
                 );
               })}
-              <button onClick={startGame}>
-                Start game
-              </button>
-              * if name is blank, it will be ignored
+              <button onClick={startGame}>Start game</button>* if name is blank,
+              it will be ignored
             </div>
             <div className="token-selection">
               {tokenContainerStatus.isOpen &&
@@ -499,9 +572,7 @@ setModal(wat.src)
                 <div>{aWinnerIsYou.name} is the winner!</div>
               </div>
               <div className="endgame-button-container">
-                <button  onClick={resetGame}>
-                  New Game?
-                </button>
+                <button onClick={resetGame}>New Game?</button>
               </div>
             </div>
           )}
@@ -608,16 +679,15 @@ setModal(wat.src)
                 Gold pile and new round button
             */}
             <div className="gold-pile-container" id="gold-pile-container">
-            <img
-                      className="gold-pile"
-                      id="gold-pile"
-                      alt="players gold"
-                      src={playersGold}
-                    />
-              <button
-                className="next-round-btn"
-                onClick={() => nextRound()}
-              >
+              <div class="gold-pile-wrapper">
+                <img
+                  className="gold-pile"
+                  id="gold-pile"
+                  alt="players gold"
+                  src={playersGold}
+                />
+              </div>
+              <button className="next-round-btn" onClick={() => nextRound()}>
                 Next round
               </button>
             </div>
