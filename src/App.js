@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./css/styles.css";
-import RPWimg from "./images/openScreen.png";
 import { imageTokens, theCards } from "./imageTokens";
-import selectImage from "./images/player-tokens/selectImage.png";
 import playersGold from "./images/gp.png";
 import cardBack from "./images/card-images/_cardBack.png";
+import Particles from "./components/particle-generator";
 import {
   copyObject,
   defaultPlayerSetup,
@@ -13,11 +12,14 @@ import {
   shuffleCards,
   makeParticles,
   makeAnArray,
-  startGame,
   pullFromDeck,
   nextRound,
   handleRowClick,
 } from "./littleBlackBox";
+import BackgroundContainer from "./components/background-container";
+import StartScreen from "./components/start-screen";
+import GameSetup from "./components/game-setup";
+import WinnerScreen from "./components/winner-screen";
 
 function App() {
   const [gameStatus, setGameStatus] = useState("start-screen");
@@ -34,10 +36,6 @@ function App() {
   const playerTokens = useRef(null);
   const backgroundContainer = useRef(null);
   const [disable, setDisable] = useState(false);
-  const [tokenContainerStatus, setTokenContainerStatus] = useState({
-    isOpen: false,
-    openedBy: "",
-  });
   const [gameState, setGameState] = useState({
     players: {},
     numOfPlayers: 0,
@@ -68,7 +66,6 @@ function App() {
     setPlayerSetup(defaultPlayerSetup);
     setGameStatus("start-screen");
     setGameState({ players: {}, numOfPlayers: 0 });
-    setTokenContainerStatus({ isOpen: false, openedBy: "" });
     setAWinnerIsYou("");
     setCurrentFirstPlayer(0);
     setCardPile(theCards);
@@ -80,9 +77,9 @@ function App() {
   /**
    * Handles next round button click
    */
-  const handleNextRound = (e) => {
+  const handleNextRound = (button) => {
     setDisable(true);
-    e.target.classList.add("disabled");
+    button.target.classList.add("disabled");
     nextRound(
       gameState,
       setAWinnerIsYou,
@@ -100,7 +97,7 @@ function App() {
       setGameState,
       setCurrentFirstPlayer,
       setDisable,
-      e
+      button
     );
   };
 
@@ -174,142 +171,25 @@ function App() {
    */
   return (
     <div className="main-container">
-      {/**
-       * Particl wrapper
-       */}
-      <div className="particle-wrapper">
-        <div className="particle-and-foreground-container">
-          <div className="particles-container">
-            {particles.map((el) => {
-              return el;
-            })}
-          </div>
-        </div>
-      </div>
+      <Particles particles={particles} />
+      <BackgroundContainer backgroundContainer={backgroundContainer} />
 
-      {/* /**
-       * Background container
-       */}
-      <div className="background-container" ref={backgroundContainer}>
-        <div className="blue-gradient"></div>
-        <div className="orange-gradient"></div>
-      </div>
-
-      {/* /**
-       * Start screen
-       */}
       {gameStatus === "start-screen" && (
-        <div className="start-screen">
-          <img alt="Rock Paper Wizard Logo" src={RPWimg} draggable="false" />
-          <button
-            onClick={() => setGameStatus("setup")}
-            className="start-button"
-          >
-            Start new game
-          </button>
-        </div>
+        <StartScreen setGameStatus={setGameStatus} />
       )}
 
-      {/* /**
-       * setup
-       */}
       {gameStatus === "setup" && (
-        <div className="setup-container">
-          <div className="form-container">
-            <div className="form-fields">
-              {makeAnArray(6).map((num) => {
-                const tokenIcon = playerSetup[`player${num + 1}`].icon;
-                const tokenImg = imageTokens[tokenIcon]?.url;
-
-                return (
-                  <div key={`form-field-${num}`} className="form-field">
-                    <label htmlFor="player-1">Player {num + 1}</label>
-                    <input
-                      onChange={(e) =>
-                        handlePlayerInput(`player${num + 1}`, {
-                          name: e.target.value,
-                        })
-                      }
-                    ></input>
-                    <img
-                      id={`player-${num + 1}`}
-                      alt="selected-token-img"
-                      className="selected-token"
-                      src={tokenImg ? tokenImg : selectImage}
-                      draggable="false"
-                      onClick={() => [
-                        handlePlayerInput(`player${num + 1}`, { icon: null }),
-                        setTokenContainerStatus({
-                          isOpen: true,
-                          openedBy: `player${num + 1}`,
-                        }),
-                      ]}
-                    />
-                  </div>
-                );
-              })}
-              <button
-                onClick={() =>
-                  startGame(gameState, playerSetup, setGameState, setGameStatus)
-                }
-              >
-                Start game
-              </button>
-              * if name is blank, it will be ignored
-            </div>
-            <div className="token-selection">
-              {tokenContainerStatus.isOpen &&
-                Object.keys(imageTokens).map((token, index) => {
-                  const { url, name } = imageTokens[token];
-                  const iconSelected = Object.keys(playerSetup).filter(
-                    (playerId) => playerSetup[playerId]?.icon === name
-                  );
-
-                  if (iconSelected.length === 0) {
-                    return (
-                      <img
-                        alt={`token ${name}`}
-                        src={url}
-                        key={`token-img-${index}`}
-                        className="token-img"
-                        draggable="false"
-                        onClick={() => [
-                          handlePlayerInput(tokenContainerStatus.openedBy, {
-                            icon: name,
-                          }),
-                          setTokenContainerStatus({
-                            isOpen: false,
-                            openedBy: "",
-                          }),
-                        ]}
-                      />
-                    );
-                  }
-                  return null;
-                })}
-            </div>
-          </div>
-        </div>
+        <GameSetup
+          playerSetup={playerSetup}
+          handlePlayerInput={handlePlayerInput}
+          gameState={gameState}
+          setGameState={setGameState}
+          setGameStatus={setGameStatus}
+        />
       )}
 
       {gameStatus === "someoneWon" && (
-        <div className="card-modal">
-          {aWinnerIsYou && (
-            <div className="endgame-container">
-              <div className="winner-container">
-                <img
-                  alt="winner"
-                  className="winner-icon"
-                  src={imageTokens[aWinnerIsYou.icon].url}
-                />
-                <div>{aWinnerIsYou.name} is the winner!</div>
-              </div>
-              <div className="endgame-button-container">
-                <button onClick={resetGame}>New Game?</button>
-              </div>
-            </div>
-          )}
-        </div>
+        <WinnerScreen aWinnerIsYou={aWinnerIsYou} resetGame={resetGame} />
       )}
 
       {/* /**

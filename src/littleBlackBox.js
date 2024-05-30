@@ -1,4 +1,4 @@
-import goldPileSrc from "./images/gp.png";
+// import goldPileSrc from "./images/gp.png";
 import newGpSrc from "./images/newGp.png";
 
 /**
@@ -592,7 +592,7 @@ export const nextRound = async (
   setGameState,
   setCurrentFirstPlayer,
   setDisable,
-  e
+  button
 ) => {
   const copiedGameState = copyObject(gameState);
   const firstCheck = checkForWinner(
@@ -635,7 +635,7 @@ export const nextRound = async (
     setGameState(newGPandLocation);
     setCurrentFirstPlayer(newCurrentFP);
     setDisable(false);
-    e.target.classList.remove("disabled");
+    button.target.classList.remove("disabled");
   }, 2000);
 };
 
