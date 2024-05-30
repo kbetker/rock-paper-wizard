@@ -48,6 +48,12 @@
   border-radius: 50%;
   background-size: contain;
   box-sizing: border-box;
+  transition: all 0.25s linear;
+  border: 1px solid rgba(0, 0, 0, 0);
+}
+
+.disabled {
+  opacity: 0.5;
 }
 
 .game-board-row-marker:hover {
