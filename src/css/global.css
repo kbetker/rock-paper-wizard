@@ -10,20 +10,54 @@ html {
 }
 
 button {
-  padding: 1rem;
+  padding: 0.8rem;
   font-size: xx-large;
-  border-radius: 5px;
+  border-radius: 10px;
   border: none;
-  background: linear-gradient(rgb(105, 0, 0) 0%, rgb(39, 0, 0) 100%);
+  border-left: 1px solid rgb(3, 192, 255);
+  border-right: 1px solid rgb(255, 179, 0);
+  border-top: 1px solid rgb(83, 83, 83);
+  border-bottom: 1px solid rgb(83, 83, 83);
+  background: linear-gradient(
+    0.25turn,
+    #194c61,
+    rgb(11, 11, 11),
+    rgb(11, 11, 11),
+    rgb(11, 11, 11),
+    #754512
+  );
   color: red;
+  cursor: pointer;
+  box-shadow: 5px 5px 10px black;
 }
 
 button:hover {
-  filter: brightness(2);
+  background: linear-gradient(
+    0.25turn,
+    #236b8a,
+    rgb(22, 22, 22),
+    rgb(22, 22, 22),
+    rgb(22, 22, 22),
+    #9d5d19
+  );
+  border-left: 1px solid rgb(3, 192, 255);
+  border-right: 1px solid rgb(255, 179, 0);
+  border-top: 1px solid rgb(103, 103, 103);
+  border-bottom: 1px solid rgb(103, 103, 103);
+}
+
+button:active {
+  transform: scale(0.97);
+  box-shadow: 3px 3px 10px black;
 }
 
 .medievalsharp-regular {
   font-family: "MedievalSharp", cursive;
   font-weight: 400;
   font-style: normal;
+}
+
+.disabled {
+  text-decoration: line-through;
+  color: rgb(173, 1, 1);
 }
