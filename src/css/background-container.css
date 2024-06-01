@@ -1,5 +1,10 @@
 .background-container {
-  animation: animate-background 90s infinite linear;
+  /* animation: animate-background 90s infinite linear; */
+  animation-duration: 90s;
+  animation-name: animate-background;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-play-state: running;
   background-image: url("../images/backgroundCave.png");
   display: flex;
   height: 100vh;
@@ -8,12 +13,13 @@
   position: fixed;
   top: 0;
   width: 100vw;
+  z-index: -200;
 }
 
 .blue-gradient {
   background: linear-gradient(
     90deg,
-    rgba(158, 186, 205, 0.8) 0%,
+    rgb(0, 84, 140) 0%,
     rgba(158, 186, 205, 0) 100%
   );
   mix-blend-mode: color-dodge;
@@ -24,7 +30,7 @@
   background: linear-gradient(
     90deg,
     rgba(208, 177, 117, 0) 0%,
-    rgba(255, 162, 0, 0.8) 100%
+    rgb(187, 131, 0) 100%
   );
   mix-blend-mode: color-dodge;
   width: 30%;

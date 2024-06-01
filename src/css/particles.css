@@ -1,0 +1,84 @@
+.particle-wrapper {
+  height: 100vh;
+  left: 0;
+  position: fixed;
+  top: 0;
+  width: 100vw;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.particle-and-foreground-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 1;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+}
+
+.foreground {
+  position: absolute;
+  top: 0;
+  z-index: 10;
+}
+
+.particles-container {
+  position: relative;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.particle {
+  border-radius: 50%;
+  background-color: rgb(255, 226, 182);
+  position: absolute;
+  right: 0;
+  animation-name: particleFlyUp, particleWiggle;
+  mix-blend-mode: add;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear, ease-in-out;
+}
+
+@keyframes particleFlyUp {
+  0% {
+    right: 0;
+  }
+
+  100% {
+    right: 100vw;
+  }
+}
+
+@keyframes particleWiggle {
+  0% {
+    transform: translateY(40px);
+    /* opacity: 0; */
+    background-color: rgb(255, 255, 255);
+    box-shadow: 0 0 20px 3px white;
+  }
+  10% {
+    opacity: 1;
+  }
+  33% {
+    transform: translateY(-40px);
+    box-shadow: 0 0 10px 0 white;
+  }
+  66% {
+    transform: translateY(0px);
+    background-color: orange;
+    box-shadow: 0 0 10px 0 orange;
+  }
+  90% {
+    opacity: 1;
+    background-color: black;
+  }
+  100% {
+    transform: translateY(-80px);
+    opacity: 0;
+  }
+}
